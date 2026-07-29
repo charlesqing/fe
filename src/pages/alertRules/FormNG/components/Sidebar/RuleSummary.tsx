@@ -37,6 +37,7 @@ const cateNameMap: Record<string, string> = {
   tdengine: 'TDengine',
   loki: 'Loki',
   victorialogs: 'VictoriaLogs',
+  openobserve: 'OpenObserve',
   doris: 'Doris',
   host: 'Host',
 };

@@ -160,6 +160,18 @@ export const baseCates: Cate[] = [
     alertPro: false,
     logo: '/image/logos/victorialogs.png',
   },
+  {
+    value: 'openobserve',
+    label: 'OpenObserve',
+    label_en: 'OpenObserve',
+    type: ['logging'],
+    alertRule: true,
+    dashboard: false,
+    dashboardVariable: false,
+    graphPro: false,
+    alertPro: false,
+    logo: '/image/logos/openobserve.png',
+  },
 ];
 
 export const getCateDisplayLabel = (cate: Pick<Cate, 'label' | 'label_en'> | undefined, lang?: string) => {

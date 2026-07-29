@@ -442,6 +442,7 @@ export default function FormNG(props: IProps) {
                           'redshift',
                           'pgsql',
                           'victorialogs',
+                          'openobserve',
                           'elasticsearch',
                           'opensearch',
                           'aliyun-sls',

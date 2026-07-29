@@ -8,6 +8,7 @@ import { Event as ElasticsearchDetail } from '@/plugins/elasticsearch';
 import { Event as MySQLDetail } from '@/plugins/mysql';
 import { Event as Pgsql } from '@/plugins/pgsql';
 import { Event as Victorialogs } from '@/plugins/victorialogs';
+import { Event as OpenObserve } from '@/plugins/openobserve';
 import { Event as Doris } from '@/plugins/doris';
 
 import Host from '../Detail/Host';
@@ -49,6 +50,9 @@ const eventDetail = ({ eventDetail, t, history, commonState, indexPatterns }) =>
   }
   if (cate === DatasourceCateEnum.victorialogs) {
     return Victorialogs();
+  }
+  if (cate === DatasourceCateEnum.openobserve) {
+    return OpenObserve();
   }
   if (cate === DatasourceCateEnum.doris) {
     return Doris();

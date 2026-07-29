@@ -75,6 +75,7 @@ export enum BaseDatasourceCateEnum {
   pgsql = 'pgsql',
   doris = 'doris',
   victorialogs = 'victorialogs',
+  openobserve = 'openobserve',
 }
 
 export const DatasourceCateEnum = { ...BaseDatasourceCateEnum, ...AdvancedDatasourceCateEnum };

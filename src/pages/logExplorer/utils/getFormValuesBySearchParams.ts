@@ -267,7 +267,7 @@ export default function getFormValuesBySearchParams(params: { [index: string]: s
         };
       }
     }
-    if (data_source_name === DatasourceCateEnum.victorialogs || data_source_name === DatasourceCateEnum.loki) {
+    if (data_source_name === DatasourceCateEnum.victorialogs || data_source_name === DatasourceCateEnum.loki || data_source_name === DatasourceCateEnum.openobserve) {
       const mode = _.get(params, 'mode');
       const limit = _.get(params, 'limit');
       return {
@@ -527,7 +527,7 @@ export function getLocationSearchByFormValues(formValues: FormValue) {
     }
     return queryString.stringify(query);
   }
-  if (data_source_name === DatasourceCateEnum.victorialogs || data_source_name === DatasourceCateEnum.loki) {
+  if (data_source_name === DatasourceCateEnum.victorialogs || data_source_name === DatasourceCateEnum.loki || data_source_name === DatasourceCateEnum.openobserve) {
     query.mode = formValues.query?.mode;
     query.query = formValues.query?.query;
     query.limit = formValues.query?.limit;

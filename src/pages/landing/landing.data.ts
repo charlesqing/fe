@@ -110,6 +110,7 @@ export const landingIntegrationProducts: LandingChip[] = [
   { label: 'MySQL', iconUrl: '/image/logos/mysql.png', url: '/datasources' },
   { label: 'PostgreSQL', iconUrl: '/image/logos/pgsql.png', url: '/datasources' },
   { label: 'Doris', iconUrl: '/image/logos/doris.png', url: '/datasources' },
+  { label: 'OpenObserve', iconUrl: '/image/logos/openobserve.png', url: '/datasources' },
 ];
 
 /** 模板中心入口 — 指向内置集成模板中心（70+ 内置集成），作为新人"从这里开始"的发现入口 */

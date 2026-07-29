@@ -7,6 +7,7 @@ import { DatasourceCateEnum, IS_PLUS } from '@/utils/constant';
 import { getDefaultRuleConfig, datasourceDefaultValue, defaultValues } from './constants';
 import { DATASOURCE_ALL } from '../constants';
 import { DEFAULT_QUERY } from '@/plugins/victorialogs/constants';
+import { DEFAULT_QUERY as OPENOBSERVE_DEFAULT_QUERY } from '@/plugins/openobserve/constants';
 // @ts-ignore
 import * as alertUtils from 'plus:/parcels/AlertRule/utils';
 
@@ -432,6 +433,22 @@ export function getDefaultValuesByCate(prod, cate) {
           {
             ref: 'A',
             query: DEFAULT_QUERY,
+          },
+        ],
+      },
+      ...datasourceDefaultValue,
+    };
+  }
+  if (cate === DatasourceCateEnum.openobserve) {
+    return {
+      prod,
+      cate,
+      rule_config: {
+        ...defaultRuleConfig,
+        queries: [
+          {
+            ref: 'A',
+            query: OPENOBSERVE_DEFAULT_QUERY,
           },
         ],
       },

@@ -42,6 +42,7 @@ export default function useFieldConfig(search: IFieldSearch, dep: any): FieldCon
       const isSLSAvailable = search.cate === 'aliyun-sls' && search.resource;
       const isDorisAvailable = search.cate === 'doris' && search.resource;
       const isVictoriaLogsAvailable = search.cate === 'victorialogs' && search.query;
+      const isOpenObserveAvailable = search.cate === 'openobserve' && search.query;
       const isCKAvailable = search.cate === 'ck' && search.resource;
       const isCLSAvailable = search.cate === 'tencent-cls' && search.resource;
       const isLTSAvailable = search.cate === 'huawei-lts' && search.resource;
@@ -52,6 +53,7 @@ export default function useFieldConfig(search: IFieldSearch, dep: any): FieldCon
         isSLSAvailable ||
         isDorisAvailable ||
         isVictoriaLogsAvailable ||
+        isOpenObserveAvailable ||
         isCKAvailable ||
         isCLSAvailable ||
         isLTSAvailable ||

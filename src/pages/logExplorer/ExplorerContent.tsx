@@ -9,6 +9,7 @@ import { NAME_SPACE } from '@/pages/logExplorer/constants';
 import Elasticsearch from '@/plugins/elasticsearch/ExplorerNG';
 import VictoriaLogs from '@/plugins/victorialogs/ExplorerNG';
 import Loki from '@/plugins/loki/ExplorerNG';
+import OpenObserve from '@/plugins/openobserve/ExplorerNG';
 
 interface Props {
   tabKey: string;
@@ -31,6 +32,10 @@ export default function index(props: Props) {
 
   if (datasourceCate === DatasourceCateEnum.victorialogs) {
     return <VictoriaLogs tabKey={tabKey} defaultFormValuesControl={defaultFormValuesControl} renderCommonSettings={renderCommonSettings} />;
+  }
+
+  if (datasourceCate === DatasourceCateEnum.openobserve) {
+    return <OpenObserve tabKey={tabKey} defaultFormValuesControl={defaultFormValuesControl} renderCommonSettings={renderCommonSettings} />;
   }
 
   if (datasourceCate === DatasourceCateEnum.loki) {

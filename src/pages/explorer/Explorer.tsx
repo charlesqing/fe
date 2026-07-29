@@ -35,6 +35,7 @@ import { Explorer as IotDB } from '@/plugins/iotdb';
 import { Explorer as TDengine } from '@/plugins/TDengine';
 import { Explorer as CK } from '@/plugins/clickHouse';
 import { Explorer as Victorialogs } from '@/plugins/victorialogs';
+import { Explorer as OpenObserve } from '@/plugins/openobserve';
 import { allCates } from '@/components/AdvancedWrap/utils';
 import ViewSelect, { ModalState } from '@/components/ViewSelect';
 
@@ -390,6 +391,8 @@ const Panel = (props: IProps) => {
                   return <CK datasourceValue={datasourceValue} headerExtra={headerExtraRef.current} />;
                 } else if (datasourceCate === DatasourceCateEnum.victorialogs) {
                   return <Victorialogs datasourceValue={datasourceValue} headerExtra={headerExtraRef.current} defaultFormValuesControl={defaultFormValuesControl} />;
+                } else if (datasourceCate === DatasourceCateEnum.openobserve) {
+                  return <OpenObserve datasourceValue={datasourceValue} headerExtra={headerExtraRef.current} defaultFormValuesControl={defaultFormValuesControl} />;
                 }
                 return (
                   <PlusExplorer
