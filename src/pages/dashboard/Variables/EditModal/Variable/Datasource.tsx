@@ -24,12 +24,12 @@ export default function Datasource(props: Props) {
   const [options, setOptions] = useState<
     {
       label: string;
-      value: string;
+      value: number;
     }[]
   >([]);
 
   useEffect(() => {
-    let currentDatasourceList = definition ? (groupedDatasourceList[definition] as any) : [];
+    let currentDatasourceList = typeof definition === 'string' ? groupedDatasourceList[definition] ?? [] : [];
     if (regex) {
       currentDatasourceList = _.filter(currentDatasourceList, (option) => {
         return regex.test(option.name);
@@ -39,12 +39,12 @@ export default function Datasource(props: Props) {
       return { label: ds.name, value: ds.id }; // TODO value 实际是 number 类型
     });
     setOptions(itemOptions);
-  }, [JSON.stringify(definition), regex]);
+  }, [definition, regex, groupedDatasourceList]);
 
   return (
     <>
       <Form.Item label={t('var.datasource.definition')} name='definition' rules={[{ required: true }]}>
-        <Select disabled={editMode === 0}>
+        <Select disabled={editMode === 0} showSearch optionFilterProp='children'>
           {_.map(datasourceCateOptions, (item) => (
             <Select.Option key={item.value} value={item.value}>
               {item.label}
@@ -69,7 +69,7 @@ export default function Datasource(props: Props) {
       <Form.Item label={t('var.datasource.defaultValue')} name='defaultValue'>
         <Select>
           {_.map(
-            _.filter(groupedDatasourceList[definition], (item) => {
+            _.filter(typeof definition === 'string' ? groupedDatasourceList[definition] ?? [] : [], (item) => {
               if (regex) {
                 return regex.test(item.name);
               }

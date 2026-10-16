@@ -9,7 +9,7 @@ import { useVariableManager } from '../VariableManagerContext';
 import { Props } from './types';
 
 export default function Textbox(props: Props) {
-  const { item: variable, variableValueFixed, value, setValue } = props;
+  const { disabled, item: variable, variableValueFixed, value, setValue } = props;
   const { hide, name, label } = variable;
 
   const { updateVariable, registerVariable, registeredVariables } = useVariableManager();
@@ -58,16 +58,17 @@ export default function Textbox(props: Props) {
     <div className={hide ? 'hidden' : ''}>
       <InputGroupWithFormItem label={label || name}>
         <Input
-          value={value}
+          disabled={disabled}
+          value={value as string}
           onBlur={(e) => {
-            let val = e.target.value;
+            let val = e.currentTarget.value;
             updateVariable(name, {
               value: val,
             });
           }}
-          onKeyDown={(e: any) => {
+          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.code === 'Enter') {
-              let val = e.target.value;
+              let val = e.currentTarget.value;
               updateVariable(name, {
                 value: val,
               });
@@ -75,7 +76,7 @@ export default function Textbox(props: Props) {
           }}
           onChange={(e) => {
             let val = e.target.value;
-            setValue(val as any);
+            setValue(val);
           }}
         />
       </InputGroupWithFormItem>

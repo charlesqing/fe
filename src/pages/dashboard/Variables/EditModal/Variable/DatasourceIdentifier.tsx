@@ -7,6 +7,7 @@ import _ from 'lodash';
 import { CommonStateContext } from '@/App';
 
 import stringToRegex from '../../utils/stringToRegex';
+import { hasDatasourceIdentifier } from '../../utils/datasourceIdentifier';
 import Preview from '../Preview';
 
 interface Props {
@@ -29,26 +30,23 @@ export default function DatasourceIdentifier(props: Props) {
   >([]);
 
   useEffect(() => {
-    let datasourceList = definition
-      ? _.filter(groupedDatasourceList[definition] as any, (item) => {
-          return item.identifier;
-        })
-      : [];
+    let datasourceList = typeof definition === 'string' ? (groupedDatasourceList[definition] ?? []).filter(hasDatasourceIdentifier) : [];
     if (regex) {
-      datasourceList = _.filter(datasourceList, (option) => {
+      datasourceList = datasourceList.filter((option) => {
+        regex.lastIndex = 0;
         return regex.test(option.identifier);
       });
     }
     const itemOptions = _.map(datasourceList, (ds) => {
-      return { label: ds.name, value: ds.identifier };
+      return { label: ds.identifier, value: ds.identifier };
     });
     setOptions(itemOptions);
-  }, [JSON.stringify(definition), regex]);
+  }, [definition, regex, groupedDatasourceList]);
 
   return (
     <>
       <Form.Item label={t('var.datasource.definition')} name='definition' rules={[{ required: true }]}>
-        <Select disabled={editMode === 0}>
+        <Select disabled={editMode === 0} showSearch optionFilterProp='children'>
           {_.map(datasourceCateOptions, (item) => (
             <Select.Option key={item.value} value={item.value}>
               {item.label}
@@ -73,9 +71,10 @@ export default function DatasourceIdentifier(props: Props) {
       <Form.Item label={t('var.datasource.defaultValue')} name='defaultValue'>
         <Select showSearch>
           {_.map(
-            _.filter(groupedDatasourceList[definition], (item) => {
-              if (item.identifier) {
+            _.filter(typeof definition === 'string' ? groupedDatasourceList[definition] ?? [] : [], (item) => {
+              if (hasDatasourceIdentifier(item)) {
                 if (regex) {
+                  regex.lastIndex = 0;
                   return regex.test(item.identifier);
                 }
                 return true;

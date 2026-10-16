@@ -12,7 +12,7 @@ import { CommonStateContext } from '@/App';
 import { updateAlertRules, deleteStrategy } from '@/services/warning';
 import { allCates, getCateDisplayLabel } from '@/components/AdvancedWrap/utils';
 import RefreshIcon from '@/components/RefreshIcon';
-import DatasourceSelect from '@/components/DatasourceSelect/DatasourceSelect';
+import { DatasourceSelectV3 } from '@/components/DatasourceSelect';
 import TableColumnSelect, { getDefaultColumnsConfigs, setDefaultColumnsConfigs, buildColumnOptions } from '@/components/TableColumnSelect';
 import usePagination from '@/components/usePagination';
 import Tags from '@/components/TableTags/Tags';
@@ -25,8 +25,9 @@ import { AlertRuleType, AlertRuleStatus } from '@/pages/alertRules/types';
 import { defaultColumnsConfigs, LOCAL_STORAGE_KEY, FILTER_SESSION_STORAGE_KEY } from '@/pages/alertRules/List/constants';
 import EventsDrawer, { Props as EventsDrawerProps } from '@/pages/alertRules/List/EventsDrawer';
 import EvalRecordsDrawer, { Props as EvalRecordsDrawerProps } from '@/pages/alertRules/List/EvalRecordsDrawer';
-import { matchTriggerType, TRIGGER_TYPE_OPTIONS, TriggerType } from '@/pages/alertRules/List/utils';
+import { matchSearch, matchTriggerType, TRIGGER_TYPE_OPTIONS, TriggerType } from '@/pages/alertRules/List/utils';
 import { getPageFromSearch, setPageInSearch, removePageFromSearch } from '@/utils/urlPage';
+import { getAlertSeverityName } from '@/utils/alertSeverity';
 
 interface Filter {
   cate?: string;
@@ -62,7 +63,7 @@ interface Props {
 
 export default function AlertRules(props: Props) {
   const { t, i18n } = useTranslation('alertRules');
-  const { busiGroups, datasourceList, feats } = useContext(CommonStateContext);
+  const { busiGroups, datasourceList, datasourceCateOptions, feats } = useContext(CommonStateContext);
   const { hideBusinessGroupColumn, showRowSelection, readonly, headerExtra, data, loading, setRefreshFlag, linkTarget, emptyGuide, gids, groupSwitchCount } = props;
   const history = useHistory();
   const location = useLocation();
@@ -196,22 +197,26 @@ export default function AlertRules(props: Props) {
             <Tags
               type='fill'
               borderRadius={6}
-              data={_.map(_.sortBy(data), (severity) => `S${severity}`)}
-              bgColor={(tagname: string) => {
-                const bgColorMap: Record<string, string> = {
-                  S1: 'var(--fc-red-3)',
-                  S2: 'var(--fc-orange-3)',
-                  S3: 'var(--fc-yellow-3)',
+              data={_.sortBy(data)}
+              getLabel={(severity) => `S${severity}`}
+              getTooltipTitle={(severity) => (typeof severity === 'number' ? getAlertSeverityName(severity) : undefined)}
+              bgColor={(severity) => {
+                const level = Number(severity);
+                const bgColorMap: Record<number, string> = {
+                  1: 'var(--fc-red-3)',
+                  2: 'var(--fc-orange-3)',
+                  3: 'var(--fc-yellow-3)',
                 };
-                return bgColorMap[tagname] || 'var(--fc-gray-3)';
+                return bgColorMap[level] || 'var(--fc-gray-3)';
               }}
-              fontColor={(tagname: string) => {
-                const fontColorMap: Record<string, string> = {
-                  S1: 'var(--fc-red-11)',
-                  S2: 'var(--fc-orange-11)',
-                  S3: 'var(--fc-yellow-11)',
+              fontColor={(severity) => {
+                const level = Number(severity);
+                const fontColorMap: Record<number, string> = {
+                  1: 'var(--fc-red-11)',
+                  2: 'var(--fc-orange-11)',
+                  3: 'var(--fc-yellow-11)',
                 };
-                return fontColorMap[tagname] || 'var(--fc-gray-11)';
+                return fontColorMap[level] || 'var(--fc-gray-11)';
               }}
             />
           );
@@ -359,11 +364,10 @@ export default function AlertRules(props: Props) {
     return _.filter(data, (item) => {
       const { datasourceIds, search, prod, severities, triggerType } = filter;
       const datasourceIdsWithoutHost = _.filter(datasourceIds, (id) => id !== -999);
-      const lowerCaseQuery = search?.toLowerCase() || '';
       return (
         // 列表数据排除 prod 为 firemap(灭火图)、northstar(北极星) 的记录
         !_.includes(['firemap', 'northstar'], item.prod) &&
-        (item.name.toLowerCase().indexOf(lowerCaseQuery) > -1 || _.join(item.append_tags, ' ').toLowerCase().indexOf(lowerCaseQuery) > -1) &&
+        matchSearch(item, search) &&
         ((prod && prod === item.prod) || !prod) &&
         ((item.severities &&
           _.some(item.severities, (severity) => {
@@ -406,11 +410,14 @@ export default function AlertRules(props: Props) {
               fetchData();
             }}
           />
-          <DatasourceSelect
-            style={{ minWidth: 100 }}
+          <DatasourceSelectV3
+            style={{ width: 100 }}
             filterKey='alertRule'
-            disableResponsive
             showHost
+            mode='multiple'
+            maxTagCount='responsive'
+            placeholder={t('common:datasource.name')}
+            datasourceCateList={datasourceCateOptions}
             value={filter.datasourceIds}
             onChange={(val) => {
               const newFilter = {
@@ -418,6 +425,12 @@ export default function AlertRules(props: Props) {
                 datasourceIds: val,
               };
               handleFilterChange(newFilter);
+            }}
+            onClear={() => {
+              handleFilterChange({
+                ...filter,
+                datasourceIds: undefined,
+              });
             }}
           />
           <Select
@@ -434,13 +447,13 @@ export default function AlertRules(props: Props) {
             }}
             dropdownMatchSelectWidth={false}
           >
-            <Select.Option value={1}>S1（Critical）</Select.Option>
-            <Select.Option value={2}>S2（Warning）</Select.Option>
-            <Select.Option value={3}>S3（Info）</Select.Option>
+            <Select.Option value={1}>{getAlertSeverityName(1)}</Select.Option>
+            <Select.Option value={2}>{getAlertSeverityName(2)}</Select.Option>
+            <Select.Option value={3}>{getAlertSeverityName(3)}</Select.Option>
           </Select>
           <Input
             placeholder={t('search_placeholder')}
-            style={{ width: 200 }}
+            style={{ width: 220 }}
             value={queryValue}
             onChange={(e) => {
               setQueryValue(e.target.value);
@@ -523,7 +536,8 @@ export default function AlertRules(props: Props) {
         }}
         loading={loading}
         dataSource={filterData()}
-        locale={emptyGuide ? { emptyText: emptyGuide } : undefined}
+        // 创建引导只在确实没有规则时展示；筛选无结果时使用默认空状态，避免误导为「尚未创建规则」
+        locale={emptyGuide && _.isEmpty(data) ? { emptyText: emptyGuide } : undefined}
         rowSelection={
           showRowSelection
             ? {

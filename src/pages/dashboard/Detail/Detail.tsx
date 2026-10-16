@@ -19,12 +19,12 @@ import _ from 'lodash';
 import moment from 'moment';
 import semver from 'semver';
 import { useTranslation } from 'react-i18next';
-import { useInterval } from 'ahooks';
+import { useDeepCompareEffect, useInterval, useKeyPress } from 'ahooks';
 import { v4 as uuidv4 } from 'uuid';
 import { useParams, useHistory, useLocation } from 'react-router-dom';
 import { useBeforeunload } from 'react-beforeunload';
 import queryString from 'query-string';
-import { Alert, Modal, Button, Affix, message, Spin } from 'antd';
+import { Alert, Modal, Button, Affix, message, notification, Spin } from 'antd';
 
 import { useParamsAiAction } from '@/components/AiChat/utils/useHook';
 import PageLayout from '@/components/pageLayout';
@@ -41,7 +41,7 @@ import initializeVariablesValue from '@/pages/dashboard/Variables/utils/initiali
 import replaceTemplateVariables, { replaceDatasourceVariables } from '@/pages/dashboard/Variables/utils/replaceTemplateVariables';
 
 import Variables, { IVariable } from '../Variables';
-import { ILink, IDashboardConfig } from '../types';
+import { ILink, IDashboardConfig, DashboardAnnotation, IPanel, ITarget, JsonObject, JsonValue, ScopedVariables } from '../types';
 import Panels from '../Panels';
 import Title from './Title';
 import { JSONParse } from '../utils';
@@ -49,8 +49,18 @@ import Editor from '../Editor';
 import { validateDashboardConfig } from '../utils/validateDashboardConfig';
 import { sortPanelsByGridLayout, panelsMergeToConfigs, updatePanelsInsertNewPanelToGlobal, ajustPanels, processRepeats } from '../Panels/utils';
 import { useGlobalState, DashboardMeta } from '../globalState';
-import { scrollToLastPanel, getDefaultTimeRange, getDefaultIntervalSeconds, getDefaultTimezone, dashboardTimezoneCacheKey } from './utils';
+import {
+  scrollToLastPanel,
+  getDefaultTimeRange,
+  getDefaultIntervalSeconds,
+  getDefaultTimezone,
+  dashboardTimeCacheKey,
+  dashboardTimezoneCacheKey,
+  getFullscreenDisplayOptions,
+  isFullscreenExitDisabled,
+} from './utils';
 import dashboardMigrator from './utils/dashboardMigrator';
+import { resolveSharedPanelDatasource } from './utils/resolveSharedPanelDatasource';
 import adjustInitialValues from '../Renderer/utils/adjustInitialValues';
 import './style.less';
 
@@ -62,13 +72,33 @@ interface IProps {
   isPreview?: boolean;
   isBuiltin?: boolean;
   gobackPath?: string;
-  builtinParams?: any;
+  builtinParams?: number;
+  /** 在详情页右上角操作区最左侧插入调用方专属操作。 */
+  headerLeadingActions?: React.ReactNode;
   onLoaded?: (dashboard: Dashboard['configs']) => boolean;
   hideGoBack?: boolean;
   hideGoList?: boolean;
 }
 
-const fetchDashboard = ({ id, builtinParams }) => {
+interface FetchDashboardParams {
+  id: string;
+  builtinParams?: IProps['builtinParams'];
+}
+
+interface DashboardUpdatePayload {
+  configs: string;
+  name?: string;
+  ident?: string;
+  tags?: string;
+  note?: string;
+}
+
+interface RouterPromptHandle {
+  redirect: () => void;
+  hidePrompt: () => void;
+}
+
+const fetchDashboard = ({ id, builtinParams }: FetchDashboardParams) => {
   if (builtinParams) {
     return getPayloadByUUID(builtinParams).then((res) => {
       let { content } = res;
@@ -82,12 +112,32 @@ const fetchDashboard = ({ id, builtinParams }) => {
   }
   return getDashboard(id);
 };
-const builtinParamsToID = (builtinParams) => {
-  return `${builtinParams['__uuid__']}`;
+const builtinParamsToID = (params: Record<string, string | (string | null)[] | null>) => {
+  const value = params.__uuid__;
+  return Array.isArray(value) ? `${value[0] ?? ''}` : `${value ?? ''}`;
+};
+
+const replaceTargetQueryVariables = (value: JsonValue, range: IRawTimeRange, scopedVars?: ScopedVariables): JsonValue => {
+  if (typeof value === 'string') {
+    return replaceTemplateVariables(value, { range, scopedVars });
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => replaceTargetQueryVariables(item, range, scopedVars));
+  }
+  if (value && typeof value === 'object') {
+    return Object.keys(value).reduce<Record<string, JsonValue>>((result, key) => {
+      const nestedValue = value[key];
+      if (nestedValue !== undefined) {
+        result[key] = replaceTargetQueryVariables(nestedValue, range, scopedVars);
+      }
+      return result;
+    }, {});
+  }
+  return value;
 };
 
 export default function DetailV2(props: IProps) {
-  const { isPreview = false, isBuiltin = false, gobackPath, builtinParams, hideGoBack, hideGoList } = props;
+  const { isPreview = false, isBuiltin = false, gobackPath, builtinParams, headerLeadingActions, hideGoBack, hideGoList } = props;
   const { t } = useTranslation('dashboard');
   const history = useHistory();
   const location = useLocation();
@@ -98,24 +148,32 @@ export default function DetailV2(props: IProps) {
   const [, setGlobalRange] = useGlobalState('range');
   const [, setParamsAiAction] = useParamsAiAction();
   let { id } = useParams<URLParam>();
-  const query = queryString.parse(location.search);
+  const query = queryString.parse(location.search) as Record<string, string | string[] | null | undefined>;
+  const fullscreenDisplayOptions = getFullscreenDisplayOptions(query);
+  // 点击按钮准备进入全屏时 viewMode 尚未变成 fullscreen，此时 fullscreenDisplayOptions.disableExit 恒为 false，
+  // 提示是否展示必须读原始 URL 参数，不能复用 disableExit
+  const fullscreenExitDisabled = isFullscreenExitDisabled(query);
+  const effectiveIsPreview = isPreview || fullscreenDisplayOptions.readonly;
+  const effectiveIsAuthorized = isAuthorized && !fullscreenDisplayOptions.readonly;
   if (isBuiltin) {
-    id = builtinParamsToID(query);
+    id = builtinParamsToID(query as Record<string, string | (string | null)[] | null>);
   }
   const [dashboard, setDashboard] = useState<Dashboard>({} as Dashboard);
   const [dashboardLinks, setDashboardLinks] = useState<ILink[]>();
-  const [panels, setPanels] = useState<any[]>([]);
-  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [panels, setPanels] = useState<IPanel[]>([]);
+  const [annotations, setAnnotations] = useState<DashboardAnnotation[]>([]);
   const [annotationsRefreshFlag, setAnnotationsRefreshFlag] = useState<string>(_.uniqueId('annotationsRefreshFlag_'));
   const [loading, setLoading] = useState(false);
-  const [range, setRange] = useState<IRawTimeRange>(getDefaultTimeRange(id, query, dashboardDefaultRangeIndex));
-  const [timezone, setTimezone] = useState<string>(getDefaultTimezone(id, query));
-  const [intervalSeconds, setIntervalSeconds] = useState<number | undefined>(getDefaultIntervalSeconds(query));
+  const [range, setRange] = useState<IRawTimeRange>(
+    getDefaultTimeRange(id as string, query as Record<string, string | string[] | null | undefined>, dashboardDefaultRangeIndex as number | undefined),
+  );
+  const [timezone, setTimezone] = useState<string>(getDefaultTimezone(id as string, query as Record<string, string | string[] | null | undefined>) as string);
+  const [intervalSeconds, setIntervalSeconds] = useState<number | undefined>(getDefaultIntervalSeconds(query as Record<string, string | string[] | null | undefined>));
   const [editable, setEditable] = useState(true);
   const [editorData, setEditorData] = useState({
     visible: false,
     id: '',
-    initialValues: {} as any,
+    initialValues: {} as IPanel,
   });
   const [migrationVisible, setMigrationVisible] = useState(false);
   const [migrationModalOpen, setMigrationModalOpen] = useState(false);
@@ -126,7 +184,7 @@ export default function DetailV2(props: IProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editModalVariablecontainerRef = useRef<HTMLDivElement>(null);
   let updateAtRef = useRef<number>();
-  const routerPromptRef = useRef<any>();
+  const routerPromptRef = useRef<RouterPromptHandle>(null);
   const refresh = async (cbk?: () => void) => {
     // 自动保存模式下不显示 loading
     if (dashboardSaveMode === 'manual') {
@@ -149,7 +207,7 @@ export default function DetailV2(props: IProps) {
         if (!validationResult.valid) {
           console.warn('Dashboard panels/variables config warnings:', validationResult.errors);
         }
-        if ((!configs.version || semver.lt(configs.version, '3.0.0')) && !builtinParams) {
+        if (configs.mode !== 'iframe' && (!configs.version || semver.lt(configs.version, '3.0.0')) && !builtinParams && !effectiveIsPreview) {
           setMigrationVisible(true);
         }
         setDashboardMeta({
@@ -183,7 +241,7 @@ export default function DetailV2(props: IProps) {
           const normalizedVariables = initializeVariablesValue(currentVariables, query, {
             dashboardId,
           });
-          setVariablesWithOptions(normalizedVariables);
+          setVariablesWithOptions(normalizedVariables as unknown as IVariable<JsonObject>[]);
           // 暂时不处理 panels，等待变量初始化完成
           setVariablesInitialized(false);
           setDashboardLinks(configs.links);
@@ -196,7 +254,7 @@ export default function DetailV2(props: IProps) {
         setLoading(false);
       });
   };
-  const handleUpdateDashboardConfigs = (id, updateData) => {
+  const handleUpdateDashboardConfigs = (id: number | string, updateData: DashboardUpdatePayload) => {
     if (dashboardSaveMode === 'manual') {
       let configs = {} as IDashboardConfig;
       try {
@@ -218,10 +276,10 @@ export default function DetailV2(props: IProps) {
       }
       setDashboard({
         ...dashboard,
-        name: updateData.name,
-        ident: updateData.ident,
-        tags: updateData.tags,
-        note: updateData.note,
+        name: updateData.name ?? dashboard.name,
+        ident: updateData.ident ?? dashboard.ident,
+        tags: updateData.tags ?? dashboard.tags,
+        note: updateData.note ?? dashboard.note,
         configs,
       });
     } else {
@@ -231,8 +289,8 @@ export default function DetailV2(props: IProps) {
       });
     }
   };
-  const handleVariableChange = (newValue) => {
-    const dashboardConfigs: any = dashboard.configs;
+  const handleVariableChange = (newValue: IVariable[]) => {
+    const dashboardConfigs: IDashboardConfig = _.cloneDeep(dashboard.configs);
     dashboardConfigs.var = _.map(newValue, (item) => {
       return _.omit(item, ['value', 'options']); // 兼容性代码，去除掉 value, options
     });
@@ -250,7 +308,7 @@ export default function DetailV2(props: IProps) {
   };
 
   // 监听变量初始化完成和变量值变化，重新处理 repeat panels
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     // 只有在变量初始化完成后才处理 panels
     if (!variablesInitialized || !dashboard.configs?.panels) return;
 
@@ -260,12 +318,26 @@ export default function DetailV2(props: IProps) {
   }, [
     variablesInitialized,
     // 监听变量的 name 和 value，不监听 options（避免 options 更新时重复处理）
-    JSON.stringify(_.map(variablesWithOptions, (v) => ({ name: v.name, value: v.value }))),
+    _.map(variablesWithOptions, (v) => ({ name: v.name, value: v.value })),
   ]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     setGlobalRange(range);
   }, [range, setGlobalRange]);
+
+  useEffect(() => {
+    if (query.viewMode !== 'fullscreen') return;
+
+    const aiChatBtn = document.querySelector<HTMLElement>('.ai-chat-btn-box');
+    if (!aiChatBtn) return;
+
+    const originalDisplay = aiChatBtn.style.display;
+    aiChatBtn.style.display = 'none';
+
+    return () => {
+      aiChatBtn.style.display = originalDisplay;
+    };
+  }, [query.viewMode]);
 
   useEffect(() => {
     // 切换仪表盘时，立即清空 variablesWithOptions，避免使用上一个仪表盘的变量
@@ -309,13 +381,14 @@ export default function DetailV2(props: IProps) {
         setAnnotations(res);
       });
     }
-  }, [dashboard.id, JSON.stringify(range), annotationsRefreshFlag]);
+  }, [dashboard.id, range, annotationsRefreshFlag]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     // 更新全局状态
-    const obj = {};
+    const obj: Record<string, string[]> = {};
     _.forEach(variablesWithOptions, (item) => {
-      obj[item.name] = _.isArray(item.value) ? item.value : [item.value];
+      const values = Array.isArray(item.value) ? item.value : [item.value];
+      obj[item.name] = values.filter((value): value is string | number => value !== undefined && value !== null).map(String);
     });
     const parsedRange = parseRange(range);
     setParamsAiAction({
@@ -327,7 +400,43 @@ export default function DetailV2(props: IProps) {
         var: obj,
       },
     });
-  }, [JSON.stringify(_.map(variablesWithOptions, (item) => _.pick(item, ['name', 'value']))), JSON.stringify(range)]);
+  }, [_.map(variablesWithOptions, (item) => _.pick(item, ['name', 'value'])), range]);
+
+  // `hideHeader` 为历史配置字段，现在仅控制仪表盘标题的显示。
+  const shouldHideIframeTitle = dashboard.configs?.mode === 'iframe' && dashboard.configs?.hideHeader === true;
+  const showContentHeader =
+    !fullscreenDisplayOptions.isFullscreen || fullscreenDisplayOptions.showHeader || (dashboard.configs?.mode !== 'iframe' && fullscreenDisplayOptions.showVariables);
+  const showVariables = !fullscreenDisplayOptions.isFullscreen || fullscreenDisplayOptions.showVariables;
+  const showVariablesOnly = fullscreenDisplayOptions.isFullscreen && !fullscreenDisplayOptions.showHeader && fullscreenDisplayOptions.showVariables;
+
+  const toggleFullscreen = () => {
+    const enteringFullscreen = !fullscreenDisplayOptions.isFullscreen;
+    const newQuery = _.omit(queryString.parse(location.search), ['viewMode', 'themeMode']);
+    if (enteringFullscreen) {
+      newQuery.viewMode = 'fullscreen';
+    }
+    history.replace({
+      pathname: location.pathname,
+      search: queryString.stringify(newQuery),
+    });
+    if (enteringFullscreen && !fullscreenExitDisabled) {
+      notification.info({
+        key: 'dashboard_fullscreen',
+        message: t('detail.fullscreen.notification.esc'),
+        duration: 3,
+      });
+    }
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 500);
+  };
+
+  useKeyPress('esc', () => {
+    if (fullscreenDisplayOptions.isFullscreen && !fullscreenDisplayOptions.disableExit) {
+      toggleFullscreen();
+      notification.close('dashboard_fullscreen');
+    }
+  });
 
   return (
     <PageLayout customArea={<div />}>
@@ -342,84 +451,94 @@ export default function DetailV2(props: IProps) {
             <div
               className='dashboard-detail-content-header-container'
               style={{
-                display: query.viewMode !== 'fullscreen' ? 'block' : 'none',
+                display: showContentHeader ? 'block' : 'none',
                 paddingBottom: dashboard.configs?.mode === 'iframe' ? 0 : 16,
+                paddingTop: showVariablesOnly ? 16 : undefined,
               }}
             >
-              <Title
-                isPreview={isPreview}
-                isBuiltin={isBuiltin}
-                isAuthorized={isAuthorized}
-                editable={editable}
-                updateAtRef={updateAtRef}
-                allowedLeave={allowedLeave}
-                hasUnsavedChanges={hasUnsavedChanges}
-                setAllowedLeave={setAllowedLeave}
-                setHasUnsavedChanges={setHasUnsavedChanges}
-                gobackPath={gobackPath}
-                dashboard={dashboard}
-                dashboardLinks={dashboardLinks}
-                setDashboardLinks={setDashboardLinks}
-                handleUpdateDashboardConfigs={handleUpdateDashboardConfigs}
-                range={range}
-                setRange={(v) => {
-                  setRange(v);
-                }}
-                timezone={timezone}
-                setTimezone={(newTimezone) => {
-                  setTimezone(newTimezone);
-                  window.localStorage.setItem(`${dashboardTimezoneCacheKey}_${id}`, newTimezone);
-                }}
-                intervalSeconds={intervalSeconds}
-                setIntervalSeconds={setIntervalSeconds}
-                onAddPanel={(type) => {
-                  if (type === 'row') {
-                    const newPanels = updatePanelsInsertNewPanelToGlobal(
-                      panels,
-                      {
-                        type: 'row',
-                        id: uuidv4(),
-                        name: t('visualizations.row'),
-                        collapsed: true,
-                      },
-                      'row',
-                    );
+              {(!fullscreenDisplayOptions.isFullscreen || fullscreenDisplayOptions.showHeader) && (
+                <Title
+                  isPreview={effectiveIsPreview}
+                  isBuiltin={isBuiltin}
+                  headerLeadingActions={headerLeadingActions}
+                  isAuthorized={effectiveIsAuthorized}
+                  editable={editable && !fullscreenDisplayOptions.readonly}
+                  updateAtRef={updateAtRef}
+                  allowedLeave={allowedLeave}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  setAllowedLeave={setAllowedLeave}
+                  setHasUnsavedChanges={setHasUnsavedChanges}
+                  gobackPath={gobackPath}
+                  dashboard={dashboard}
+                  dashboardLinks={dashboardLinks}
+                  setDashboardLinks={setDashboardLinks}
+                  handleUpdateDashboardConfigs={handleUpdateDashboardConfigs as unknown as (id: number, params: Record<string, unknown>) => void}
+                  range={range}
+                  setRange={(v) => {
+                    setRange(v);
+                  }}
+                  timezone={timezone}
+                  setTimezone={(newTimezone) => {
+                    setTimezone(newTimezone);
+                    window.localStorage.setItem(`${dashboardTimezoneCacheKey}_${id}`, newTimezone);
+                  }}
+                  intervalSeconds={intervalSeconds}
+                  setIntervalSeconds={setIntervalSeconds}
+                  onAddPanel={(type) => {
+                    if (type === 'row') {
+                      const newPanels = updatePanelsInsertNewPanelToGlobal(
+                        panels,
+                        {
+                          type: 'row',
+                          id: uuidv4(),
+                          name: t('visualizations.row'),
+                          collapsed: false,
+                        } as IPanel,
+                        'row',
+                      );
+                      setPanels(newPanels);
+                      handleUpdateDashboardConfigs(dashboard.id, {
+                        ...dashboard,
+                        configs: panelsMergeToConfigs(dashboard.configs, newPanels),
+                      });
+                    } else {
+                      setEditorData(adjustInitialValues(type, groupedDatasourceList, panels, variablesWithOptions));
+                    }
+                  }}
+                  onImportPanel={(panelConfig) => {
+                    const newPanels = updatePanelsInsertNewPanelToGlobal(panels, { ...panelConfig, id: uuidv4() }, 'chart', false);
                     setPanels(newPanels);
+                    scrollToLastPanel(newPanels);
                     handleUpdateDashboardConfigs(dashboard.id, {
                       ...dashboard,
                       configs: panelsMergeToConfigs(dashboard.configs, newPanels),
                     });
-                  } else {
-                    setEditorData(adjustInitialValues(type, groupedDatasourceList, panels, variablesWithOptions));
-                  }
-                }}
-                onImportPanel={(panelConfig) => {
-                  const newPanels = updatePanelsInsertNewPanelToGlobal(panels, { ...panelConfig, id: uuidv4() }, 'chart', false);
-                  setPanels(newPanels);
-                  scrollToLastPanel(newPanels);
-                  handleUpdateDashboardConfigs(dashboard.id, {
-                    ...dashboard,
-                    configs: panelsMergeToConfigs(dashboard.configs, newPanels),
-                  });
-                }}
-                routerPromptRef={routerPromptRef}
-                hideGoBack={hideGoBack}
-                hideGoList={hideGoList}
-              />
+                  }}
+                  routerPromptRef={routerPromptRef as unknown as React.MutableRefObject<{ showPrompt: () => void }>}
+                  hideGoBack={hideGoBack}
+                  hideGoList={hideGoList}
+                  hideTitle={shouldHideIframeTitle}
+                  fullscreenHeaderOnly={fullscreenDisplayOptions.isFullscreen}
+                  loadDashboardList={!fullscreenDisplayOptions.isFullscreen}
+                  onToggleFullscreen={toggleFullscreen}
+                />
+              )}
               {!editable && (
                 <div style={{ padding: '0px 10px', marginBottom: 8 }}>
                   <Alert type='warning' message={t('detail.expired')} />
                 </div>
               )}
               {dashboard.configs?.mode !== 'iframe' && (
-                <Variables
-                  editable={editable && isAuthorized}
-                  queryParams={query}
-                  onChange={handleVariableChange}
-                  onInitialized={() => {
-                    setVariablesInitialized(true);
-                  }}
-                />
+                <div style={{ display: showVariables ? 'block' : 'none' }}>
+                  <Variables
+                    editable={editable && effectiveIsAuthorized}
+                    queryParams={query}
+                    onChange={handleVariableChange}
+                    onInitialized={() => {
+                      setVariablesInitialized(true);
+                    }}
+                  />
+                </div>
               )}
             </div>
           </Affix>
@@ -427,8 +546,8 @@ export default function DetailV2(props: IProps) {
             <>
               <Panels
                 dashboardId={id}
-                isPreview={isPreview}
-                editable={editable}
+                isPreview={effectiveIsPreview}
+                editable={editable && !fullscreenDisplayOptions.readonly}
                 panels={panels}
                 setPanels={setPanels}
                 dashboard={dashboard}
@@ -444,22 +563,45 @@ export default function DetailV2(props: IProps) {
                   window.localStorage.setItem(`${dashboardTimezoneCacheKey}_${id}`, newTimezone);
                 }}
                 onShareClick={(panel) => {
-                  const curDatasourceValue = replaceDatasourceVariables(panel.datasourceValue, {
-                    datasourceList,
+                  const resolvedTargets: ITarget[] = _.map(panel.targets, (target): ITarget => {
+                    if (target.kind === 'expression' || target.__mode__ === '__expr__') {
+                      return target;
+                    }
+                    const datasourceId = target.datasource
+                      ? replaceDatasourceVariables(target.datasource.id, {
+                          datasourceList,
+                        })
+                      : undefined;
+                    return {
+                      ...target,
+                      datasource: target.datasource
+                        ? typeof datasourceId === 'number'
+                          ? {
+                              ...target.datasource,
+                              id: datasourceId,
+                            }
+                          : target.datasource
+                        : target.datasource,
+                      expr: target.expr
+                        ? replaceTemplateVariables(target.expr, {
+                            range,
+                            scopedVars: panel.scopedVars,
+                          })
+                        : target.expr,
+                      query: target.query ? (replaceTargetQueryVariables(target.query, range, panel.scopedVars) as JsonObject) : target.query,
+                      queries: target.queries ? (replaceTargetQueryVariables(target.queries, range, panel.scopedVars) as JsonObject[]) : target.queries,
+                    };
                   });
+                  const sharedDatasource = resolveSharedPanelDatasource(panel, resolvedTargets, datasourceList);
                   const serielData = {
                     dataProps: {
                       ...panel,
-                      datasourceValue: curDatasourceValue,
-                      // @ts-ignore
-                      datasourceName: _.find(datasourceList, { id: curDatasourceValue })?.name,
-                      targets: _.map(panel.targets, (target) => {
-                        const realExpr = replaceTemplateVariables(target.expr);
-                        return {
-                          ...target,
-                          expr: realExpr,
-                        };
-                      }),
+                      // 版本属于仪表盘配置而非单个面板；临时图页据此区分旧版配置。
+                      version: dashboard.configs.version,
+                      targets: resolvedTargets,
+                      datasourceCate: sharedDatasource.datasourceCate,
+                      datasourceValue: sharedDatasource.datasourceValue,
+                      datasourceName: sharedDatasource.datasourceName,
                       range,
                     },
                   };
@@ -468,12 +610,12 @@ export default function DetailV2(props: IProps) {
                       configs: JSON.stringify(serielData),
                     },
                   ]).then((res) => {
-                    const ids = res.dat;
+                    const ids = (res as { dat: string }).dat;
                     window.open(basePrefix + '/chart/' + ids);
                   });
                 }}
                 onUpdated={(res) => {
-                  updateAtRef.current = res.update_at;
+                  updateAtRef.current = (res as { update_at: number }).update_at;
                   refresh();
                 }}
                 setAnnotationsRefreshFlag={setAnnotationsRefreshFlag}
@@ -481,7 +623,16 @@ export default function DetailV2(props: IProps) {
               />
             </>
           ) : (
-            <iframe className='embedded-dashboards-iframe' src={adjustURL(dashboard.configs?.iframe_url!, darkMode)} width='100%' height='100%' />
+            <iframe
+              className='embedded-dashboards-iframe'
+              src={adjustURL(dashboard.configs?.iframe_url!, darkMode, {
+                range,
+                refreshIntervalSeconds: intervalSeconds,
+                refreshLocalKey: `${dashboardTimeCacheKey}_${dashboard.id}_refresh`,
+              })}
+              width='100%'
+              height='100%'
+            />
           )}
         </div>
       </div>
@@ -584,7 +735,7 @@ export default function DetailV2(props: IProps) {
           <Button
             key='cancel'
             onClick={() => {
-              routerPromptRef.current.hidePrompt();
+              routerPromptRef.current?.hidePrompt();
             }}
           >
             {t('detail.prompt.cancelText')}
@@ -594,7 +745,7 @@ export default function DetailV2(props: IProps) {
             type='primary'
             danger
             onClick={() => {
-              routerPromptRef.current.redirect();
+              routerPromptRef.current?.redirect();
             }}
           >
             {t('detail.prompt.discardText')}
@@ -603,7 +754,7 @@ export default function DetailV2(props: IProps) {
             key='ok'
             type='primary'
             onClick={() => {
-              routerPromptRef.current.hidePrompt();
+              routerPromptRef.current?.hidePrompt();
               updateDashboard(dashboard.id, {
                 name: dashboard.name,
                 ident: dashboard.ident,

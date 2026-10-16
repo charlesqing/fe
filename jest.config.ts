@@ -92,6 +92,14 @@ const config: Config = {
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // ai-kit only exposes its entry through package `exports`, which this jest
+    // resolver does not read; point straight at the file.
+    '^@flashcatcloud/ai-kit/actions$': '<rootDir>/node_modules/@flashcatcloud/ai-kit/dist/actions/index.js',
+    // plus: 虚拟模块（vite 插件解析），jest 下统一映射到单一存根；
+    // 需要真实行为的测试用 jest.mock('plus:...', factory, { virtual: true }) 覆盖
+    '^plus:(.*)$': '<rootDir>/src/test/mocks/plusStub.tsx',
+    // .less/.css 样式在 ts-jest 下无法解析，统一代理为 identity-obj-proxy
+    '\\.(less|css)$': 'identity-obj-proxy',
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -107,7 +115,10 @@ const config: Config = {
   preset: 'ts-jest',
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+    // ai-kit ships ESM only; it is the one dependency compiled for jest.
+    '^.+\\.js$': ['ts-jest', { tsconfig: 'tsconfig.jest-deps.json' }],
   },
+  transformIgnorePatterns: ['/node_modules/(?!@flashcatcloud/ai-kit/)'],
 
   // Run tests from one or more projects
   // projects: undefined,
@@ -142,7 +153,7 @@ const config: Config = {
   // setupFiles: [],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
-  // setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
   // The number of seconds after which a test is considered as slow and reported as such in the results.
   // slowTestThreshold: 5,
@@ -160,7 +171,7 @@ const config: Config = {
   // testLocationInResults: false,
 
   // The glob patterns Jest uses to detect test files
-  testMatch: ['**/*.test.ts'],
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   // testMatch: [
   //   "**/__tests__/**/*.[jt]s?(x)",
   //   "**/?(*.)+(spec|test).[tj]s?(x)"

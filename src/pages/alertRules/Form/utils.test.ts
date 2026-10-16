@@ -8,7 +8,7 @@ jest.mock('lodash', () => {
 });
 
 import _ from 'lodash';
-import { processInitialValues, parseTimeToValueAndUnit } from './utils';
+import { processInitialValues, processFormValues, parseTimeToValueAndUnit } from './utils';
 
 // ---------- dependency mocks ----------
 
@@ -174,6 +174,20 @@ describe('processInitialValues', () => {
     expect(result).toBeDefined();
   });
 
+  it('仅回填具有 exp 的阈值条件，不使用 expressions 回退渲染旧数据', () => {
+    const result = processInitialValues({
+      rule_config: {
+        triggers: [
+          { exp: '$A > 10', expressions: [{ ref: 'A', comparisonOperator: '>', value: 10 }] },
+          { expressions: [{ ref: 'B', comparisonOperator: '<', value: 0 }] },
+          { exp: '   ', expressions: [{ ref: 'C', comparisonOperator: '==', value: 1 }] },
+        ],
+      },
+    });
+
+    expect(result.rule_config.triggers).toEqual([{ exp: '$A > 10', expressions: [{ ref: 'A', comparisonOperator: '>', value: 10 }] }]);
+  });
+
   // ---------- 多查询测试 ----------
 
   it('应正确处理多个 queries', () => {
@@ -245,5 +259,99 @@ describe('processInitialValues', () => {
   it('应将 callbacks 字符串数组转换为 {url} 对象数组', () => {
     const result = processInitialValues({ callbacks: ['http://a.com', 'http://b.com'] });
     expect(result.callbacks).toEqual([{ url: 'http://a.com' }, { url: 'http://b.com' }]);
+  });
+});
+
+// ---------- processFormValues 回归测试 ----------
+
+const baseFormValues = {
+  effective_time: [
+    {
+      enable_days_of_week: ['0', '1', '2', '3', '4', '5', '6'],
+      enable_stime: { format: jest.fn().mockReturnValue('00:00') },
+      enable_etime: { format: jest.fn().mockReturnValue('23:59') },
+    },
+  ],
+};
+
+describe('processFormValues', () => {
+  /**
+   * 核心回归测试：editMode 记录 SQL 的 Builder/Code 视图状态，需随规则配置保存，
+   * 再次编辑时才能还原视图；builderConfig 是 Builder 的草稿配置，SQL 才是编译产物，不落库
+   */
+  it('ES SQL 查询应保留 editMode 并剥离 builderConfig', () => {
+    const result = processFormValues({
+      cate: 'elasticsearch',
+      rule_config: {
+        queries: [
+          {
+            ref: 'A',
+            syntax: 'sql',
+            editMode: 'builder',
+            builderConfig: { index: 'logs', date_field: '@timestamp' },
+            sql: 'SELECT count(*) FROM logs',
+            index: 'logs-*',
+            filter: 'service:web',
+            interval: 5,
+            interval_unit: 'min',
+          },
+        ],
+      },
+      ...baseFormValues,
+    });
+    const query = result.rule_config.queries[0];
+    expect(query.editMode).toBe('builder');
+    expect(query.builderConfig).toBeUndefined();
+    expect(query.sql).toBe('SELECT count(*) FROM logs');
+    expect(query.index).toBeUndefined();
+    expect(query.filter).toBeUndefined();
+    expect(query.interval).toBe(300);
+    expect(query.interval_unit).toBeUndefined();
+  });
+
+  it('ES DSL 查询仍应清除 SQL 模式遗留的 sql/keys', () => {
+    const result = processFormValues({
+      cate: 'elasticsearch',
+      rule_config: {
+        queries: [
+          {
+            ref: 'A',
+            syntax: 'dsl',
+            sql: 'SELECT 1',
+            keys: { valueKey: 'count' },
+            editMode: 'builder',
+            builderConfig: { index: 'logs' },
+          },
+        ],
+      },
+      ...baseFormValues,
+    });
+    const query = result.rule_config.queries[0];
+    expect(query.sql).toBeUndefined();
+    expect(query.keys).toBeUndefined();
+    expect(query.editMode).toBeUndefined();
+    expect(query.builderConfig).toBeUndefined();
+  });
+
+  it('非 ES 查询也应剥离临时 builderConfig', () => {
+    const result = processFormValues({
+      cate: 'doris',
+      rule_config: {
+        queries: [
+          {
+            ref: 'A',
+            sql: 'SELECT count(*) AS value FROM logs',
+            builderConfig: { database: 'observability', table: 'logs' },
+            interval: 5,
+            interval_unit: 'min',
+          },
+        ],
+      },
+      ...baseFormValues,
+    });
+    const query = result.rule_config.queries[0];
+    expect(query.builderConfig).toBeUndefined();
+    expect(query.sql).toBe('SELECT count(*) AS value FROM logs');
+    expect(query.interval).toBe(300);
   });
 });

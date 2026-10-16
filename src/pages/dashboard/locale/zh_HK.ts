@@ -41,6 +41,47 @@ const zh_HK = {
       light: '亮色主題連結',
     },
   },
+  sharing_link: {
+    title: '生成分享連結',
+    title_anonymous: '生成分享連結（匿名訪問）',
+    allow_anonymous: '允許不登入匿名訪問',
+    expire_at: '有效期',
+    theme: '主題',
+    theme_default: '跟隨系統',
+    theme_dark: '暗色',
+    theme_light: '亮色',
+    note: '備註',
+    note_placeholder: '備註（必填），如：給客戶查看',
+    generate: '生成連結',
+    link: '分享連結',
+    expire_time: '過期時間',
+    expired: '已過期',
+    create_by: '建立人',
+    revoke: '註銷',
+    revoke_confirm: '註銷後該連結立即失效，確認註銷？',
+    revoked: '已註銷',
+    anonymous_tip: '匿名連結在有效期內無需登入即可查看該儀表板，並可查詢其引用的數據源數據，請謹慎分享',
+    recommend_tip: '匿名訪問透過下方連結實現：連結在有效期內可免登入查看該儀表板。長期公開可把有效期設為「年」',
+    unit_hour: '小時',
+    unit_day: '天',
+    unit_month: '月',
+    unit_year: '年',
+    fetch_failed: '獲取分享連結列表失敗',
+    generate_failed: '生成分享連結失敗',
+    expire_out_of_range: '有效期超出可顯示範圍（等同於永不過期），建議註銷後重新產生',
+    set_public_confirm_title: '同時把該儀表板設為「公開-匿名訪問」？',
+    set_public_confirm_content:
+      '分享連結一經產生即可免登入開啟該儀表板，其有效性與公開設定無關。若不同步公開設定，列表頁的「公開」欄不會顯示為匿名訪問，管理員將無從察覺該儀表板已有對外連結。確認後會先把公開設定儲存為「公開-匿名訪問」，再產生連結。',
+    set_public_confirm_ok: '設為匿名訪問並產生',
+    set_public_failed: '儲存公開設定失敗，未產生分享連結',
+    revoke_failed: '註銷分享連結失敗',
+    config_load_failed: '儀表板配置讀取失敗，暫時無法設定匿名訪問，請關閉後重試',
+    revoke_all_confirm_title: '註銷全部匿名分享連結？',
+    revoke_all_confirm_content:
+      '該儀表板還有 {{num}} 條在有效期內的匿名分享連結。連結的有效性與公開設定無關，改成目前類型後它們依然可以免登入打開該儀表板。確認後將註銷該儀表板下的全部分享連結並儲存設定，註銷不可復原。',
+    revoke_all_ok: '註銷並儲存',
+    revoke_all_check_failed: '未能確認該儀表板是否還有匿名分享連結，公開設定已儲存；請打開分享連結彈窗手動確認',
+  },
   default_filter: {
     title: '預置篩選',
     public: '公開儀表盤',
@@ -59,12 +100,34 @@ const zh_HK = {
     label: '儀表盤 JSON',
     import_grafana: '匯入 Grafana 儀表盤（不推薦）',
     import_grafana_tip: '只支援導入 Prometheus 類型資料來源的儀表盤，以及夜鶯支援的圖表類型和功能 <a>問題反饋</a>',
-    import_grafana_tip_version_error: '不支援匯入小於 v7 版本的儀表盤配置',
-    import_grafana_tip_version_warning: '匯入的儀表盤配置版本小於 v8，部分圖表可能無法正常顯示，是否繼續匯入？',
     import_grafana_url: 'Grafana 儀表盤地址（建議）',
     import_grafana_url_label: 'Grafana 儀表盤地址',
-    continueToImport: '繼續匯入',
+    show_time_picker: '顯示時間選擇器',
+    show_time_picker_tip: '部分 Grafana 版本在開啟大屏模式後不會顯示時間選擇器，可開啟此選項，使用本系統的時間選擇器。',
     noSelected: '請選擇儀表盤',
+    import_grafana_report: {
+      title: '轉換報告',
+      panels: '面板',
+      targets: '查詢目標',
+      variables: '變數',
+      dropped: '丟棄',
+      unsupported: '不支援項',
+      unsupported_empty: '未發現不支援配置',
+      ledger: '遷移台帳',
+      schema: 'schema 版本',
+      status: '狀態',
+      version: '版本',
+      reason: '原因',
+      scope: '範圍',
+      path: '路徑',
+      action: '處理',
+      confirm: '確認匯入',
+      back: '返回修改',
+      copy: '複製 Markdown 報告',
+      copied: '報告已複製',
+      convert_error: '轉換失敗',
+      save_error: '儲存失敗',
+    },
     import_builtin: '匯入內置儀表盤',
     import_builtin_board: '內置儀表盤',
     clone: {
@@ -113,6 +176,7 @@ const zh_HK = {
     reg: '正則',
     reg_tip: '可選，可通過正則來過濾可選項。這裡是填寫的<a>正規表示式字面量</a>，其由包含在斜線之間的模式組成',
     reg_tip2: '如果您想要提取選項中的一部分，<a>命名捕獲組可用於分隔顯示文本和值</a>',
+    reg_object_tip: '選項有獨立顯示名稱時，正則匹配實際值；普通匹配保留名稱和值，命名捕獲組 text/value 僅覆蓋對應欄位。',
     multi: '多選',
     allOption: '包含全選',
     allValue: '自定義全選值',
@@ -256,6 +320,7 @@ const zh_HK = {
         series: '序列',
         seriesFilter: '篩選序列',
         columns: '顯示列',
+        none: '無',
         behaviour: {
           label: '點擊觸發的行為',
           showItem: '显示项目',
@@ -561,6 +626,12 @@ const zh_HK = {
         showPoints_always: '顯示',
         showPoints_none: '不顯示',
         pointSize: '點大小',
+        barAlignment: '柱形相對時間點對齊',
+        barAlignment_before: '之前',
+        barAlignment_center: '置中',
+        barAlignment_after: '之後',
+        barWidthFactor: '柱寬係數',
+        barWidthFactor_tip: '控制柱子佔用時間桶寬度的比例。1 表示填滿整個時間桶；0.6 表示佔用 60%，其餘作為間隔。',
       },
       iframe: {
         src: 'iframe 地址',
@@ -647,6 +718,7 @@ const zh_HK = {
     options_time: '查詢時間範圍',
     options_time_tip: '可指定時間範圍，預設為儀表盤全域性時間範圍',
     copy_query: '複製查詢',
+    mixed_datasource: '混用資料來源',
     hide_response: '隱藏響應數據',
   },
   migrate: {
@@ -666,6 +738,20 @@ const zh_HK = {
     deletePanel_confirm: '是否刪除圖表：{{name}}',
     invalidPanelType: '無效的圖表類型',
     fullscreen: {
+      parameters: {
+        tooltip: `內建 URL 參數：
+viewMode=fullscreen：進入全螢幕展示。
+__show_header=true：全螢幕時顯示標題列和時間選擇器。
+__show_variables=true：全螢幕時顯示變數區域。
+__readonly=true：全螢幕唯讀，停用編輯、拖曳/縮放與遷移提示。
+__disable_fullscreen_exit=true：關閉「按 ESC 退出」提示和 Esc 退出。
+__disable_variables=region,host：停用指定名稱的變數控制項。
+__from=...&__to=...：設定全域時間範圍。
+__refresh=30：設定自動重新整理週期（秒）。
+__timezone=Asia/Shanghai：設定時區。
+themeMode=light|dark：設定主題。
+__variable_value_fixed=true：固定 URL 中的變數值，不使用本機快取或候選預設值覆蓋。`,
+      },
       notification: {
         esc: '按 ESC 鍵退出全螢幕模式',
         theme: '主題模式',
@@ -698,6 +784,10 @@ const zh_HK = {
       tip: '控制所有圖表的縮放行為',
       default: '默认',
       updateTimeRange: '更新時間範圍',
+    },
+    hideHeader: {
+      label: '隱藏儀表盤標題',
+      tip: '開啟後，僅隱藏儀表盤詳情頁頂部的標題。',
     },
     save: '儲存儀表盤',
   },

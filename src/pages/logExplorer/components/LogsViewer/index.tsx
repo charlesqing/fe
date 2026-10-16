@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 
 import { CommonStateContext } from '@/App';
+import { parseRange } from '@/components/TimeRangePicker';
 import { IRawTimeRange } from '@/components/TimeRangePicker/types';
 
 import { NAME_SPACE } from '../../constants';
@@ -72,6 +73,7 @@ interface Props {
   showPageLoadMode?: boolean;
   showJSONSettings?: boolean;
   showTopNSettings?: boolean;
+  showFlattenSettings?: boolean;
   showLogMode?: boolean;
   addonBefore?: React.ReactNode;
   timeColumnWidth?: number;
@@ -122,7 +124,12 @@ interface LogsViewerState {
   /** 字段下钻、格式化相关配置 */
   fieldConfig?: Props['fieldConfig'];
   indexData?: Props['indexData'];
+  /** field → Field 的索引 Map，供 Token/LogFieldValue 快速查找，避免线性扫描 */
+  indexDataMap?: Map<string, Field>;
   range?: Props['range'];
+  /** 时间范围解析结果（unix 秒），Provider 层算一次，避免每个 Token 重复 parseRange */
+  rangeStart?: number;
+  rangeEnd?: number;
   getAddToQueryInfo?: Props['getAddToQueryInfo'];
   drilldownContext?: Props['drilldownContext'];
   openAddDrilldownLink?: (params: { linkField: string; linkName: string }) => void;
@@ -162,6 +169,7 @@ export default function LogsViewer(props: Props) {
     showPageLoadMode,
     showJSONSettings,
     showTopNSettings,
+    showFlattenSettings,
     showLogMode = true,
     addonBefore,
     timeColumnWidth,
@@ -239,20 +247,31 @@ export default function LogsViewer(props: Props) {
     visible: false,
   });
 
+  // P0-2: 稳定 context value，避免 LogsViewer 任何 state 变化都让所有 Token/LogFieldValue 消费者重渲
+  const logsViewerState = useMemo(() => {
+    const indexDataMap = new Map<string, Field>();
+    _.forEach(props.indexData, (item) => {
+      indexDataMap.set(item.field, item);
+    });
+    const parsedRange = props.range ? parseRange(props.range) : null;
+    return {
+      id_key,
+      raw_key,
+      fieldConfig: props.fieldConfig,
+      indexData: props.indexData,
+      indexDataMap,
+      range: props.range,
+      rangeStart: parsedRange ? moment(parsedRange.start).unix() : 0,
+      rangeEnd: parsedRange ? moment(parsedRange.end).unix() : 0,
+      getAddToQueryInfo: props.getAddToQueryInfo,
+      drilldownContext,
+      openAddDrilldownLink: drilldownContext ? openAddDrilldownLink : undefined,
+      enableLogTextSelectMenu,
+    };
+  }, [id_key, raw_key, props.fieldConfig, props.indexData, props.range, props.getAddToQueryInfo, drilldownContext, openAddDrilldownLink, enableLogTextSelectMenu]);
+
   return (
-    <LogsViewerStateContext.Provider
-      value={{
-        id_key,
-        raw_key,
-        fieldConfig: props.fieldConfig,
-        indexData: props.indexData,
-        range: props.range,
-        getAddToQueryInfo: props.getAddToQueryInfo,
-        drilldownContext,
-        openAddDrilldownLink: drilldownContext ? openAddDrilldownLink : undefined,
-        enableLogTextSelectMenu,
-      }}
-    >
+    <LogsViewerStateContext.Provider value={logsViewerState}>
       <>
         {patternHistogramState.visible && isClusteringEnabled ? (
           <ClusteringHistogram {...patternHistogramState} setPatternHistogramState={setPatternHistogramState} />
@@ -364,6 +383,7 @@ export default function LogsViewer(props: Props) {
                 showPageLoadMode={showPageLoadMode}
                 showJSONSettings={showJSONSettings}
                 showTopNSettings={showTopNSettings}
+                showFlattenSettings={showFlattenSettings}
                 organizeFields={organizeFields}
                 setOrganizeFields={setOrganizeFields}
               />
@@ -378,6 +398,7 @@ export default function LogsViewer(props: Props) {
                 <Raw
                   id_key={id_key}
                   raw_key={raw_key}
+                  logsHash={logsHash}
                   timeField={timeField}
                   data={logs}
                   highlights={highlights}
@@ -391,6 +412,8 @@ export default function LogsViewer(props: Props) {
                   onValueFilter={onAddToQuery}
                   rowPrefixRender={rowPrefixRender}
                   filterFields={filterFields}
+                  organizeFields={organizeFields}
+                  fieldConfig={props.fieldConfig}
                   timeColumnWidth={timeColumnWidth}
                   timeFieldColumnFormat={timeFieldColumnFormat}
                   linesColumnFormat={linesColumnFormat}
@@ -422,6 +445,8 @@ export default function LogsViewer(props: Props) {
                   }}
                   onValueFilter={onAddToQuery}
                   filterFields={filterFields}
+                  organizeFields={organizeFields}
+                  fieldConfig={props.fieldConfig}
                   colWidths={colWidths}
                   tableColumnsWidthCacheKey={tableColumnsWidthCacheKey}
                   onOpenOrganizeFieldsModal={() => {

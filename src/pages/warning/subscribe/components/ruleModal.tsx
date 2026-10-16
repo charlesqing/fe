@@ -27,9 +27,11 @@ import _ from 'lodash';
 import { strategyItem, strategyStatus } from '@/store/warningInterface';
 import { getStrategyGroupSubList, updateAlertRules } from '@/services/warning';
 import { priorityColor } from '@/utils/constant';
+import { getAlertSeverityName } from '@/utils/alertSeverity';
 import { getBusinessTeamList } from '@/services/manage';
 import { CommonStateContext } from '@/App';
 import usePagination from '@/components/usePagination';
+import { matchSearch } from '@/pages/alertRules/List/utils';
 
 const { Option } = Select;
 interface props {
@@ -101,9 +103,8 @@ const ruleModal: React.FC<props> = (props) => {
 
   const filterData = () => {
     const data = JSON.parse(JSON.stringify(currentStrategyDataAll));
-    const res = data.filter((item) => {
-      return item.name.indexOf(query) > -1 || item.append_tags.join(' ').indexOf(query) > -1;
-    });
+    // 与告警规则列表页共用搜索逻辑（名称、标签、查询语句，不区分大小写），保持 search_placeholder 提示语与行为一致
+    const res = data.filter((item) => matchSearch(item, query));
     setCurrentStrategyData(res || []);
   };
 
@@ -151,7 +152,7 @@ const ruleModal: React.FC<props> = (props) => {
         return _.map(data, (severity) => {
           return (
             <Tag key={severity} color={priorityColor[severity - 1]}>
-              S{severity}
+              {getAlertSeverityName(severity)}
             </Tag>
           );
         });

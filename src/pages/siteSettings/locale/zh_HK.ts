@@ -15,8 +15,8 @@ const zh_HK = {
   site_url_tip: '用於外部訪問夜鶯的地址，後端可用此生成可訪問到夜鶯實例的鏈接',
   page_title: '站點標題',
   page_title_tip: '覆蓋默認的標題 (Nightingale)',
-  home_page_url: '主站鏈接',
-  home_page_url_tip: '覆蓋默認的主站鏈接 (/metric/explorer)',
+  home_page_url: '預設訪問地址',
+  home_page_url_tip: '訪問根路徑 / 會跳轉到使用者設定的地址，預設值為：/landing',
   displayMode: {
     tree: '樹形',
     list: '列表',
@@ -32,6 +32,7 @@ const zh_HK = {
   print_access_log: '開啟 Access Log',
   print_body_paths: '打印請求 Body 路徑',
   font_family: '字體',
+  alert_severity_names: '自訂告警等級命名',
 };
 
 export default zh_HK;

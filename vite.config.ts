@@ -19,6 +19,7 @@ import { md } from './plugins/md';
 import plusResolve from './plugins/plusResolve';
 import prefixPlugin from './plugins/vite-plugin-prefix';
 import lazyToEagerOnBuild from './plugins/vite-plugin-lazy-eager';
+import dotPathSpaFallback from './plugins/vite-plugin-dot-path-spa-fallback';
 import devSingleLocale from './plugins/vite-plugin-dev-locale';
 import getFontFamilyByEnv from './src/utils/getFontFamilyByEnv';
 import react from '@vitejs/plugin-react';
@@ -58,7 +59,8 @@ export default defineConfig(({ mode }) => {
     base: baseName + '/',
     plugins: [
       lazyToEagerOnBuild(),
-      devSingleLocale(env.VITE_DEV_LOCALE || 'zh_CN'),
+      dotPathSpaFallback(),
+      devSingleLocale(env.VITE_DEV_LOCALE || 'en_US'),
       react(),
       svgr({
         svgrOptions: {
@@ -106,6 +108,17 @@ export default defineConfig(({ mode }) => {
     server: {
       hmr: true,
       proxy: {
+        // 本地联调兼容尚未升级到 n9e-plus 权限接口的后端；生产环境不经过 Vite dev server。
+        '/api/n9e-plus/self/perms': {
+          target: proxyURL,
+          changeOrigin: true,
+          rewrite: (requestPath) => requestPath.replace('/api/n9e-plus/self/perms', '/api/n9e/self/perms'),
+        },
+        '/api/n9e-plus/operation': {
+          target: proxyURL,
+          changeOrigin: true,
+          rewrite: (requestPath) => requestPath.replace('/api/n9e-plus/operation', '/api/n9e/operation'),
+        },
         '/api': {
           target: proxyURL,
           changeOrigin: true,

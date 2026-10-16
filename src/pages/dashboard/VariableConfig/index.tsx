@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import _ from 'lodash';
 import queryString from 'query-string';
 import { useLocation } from 'react-router-dom';
@@ -22,6 +22,7 @@ import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { Spin } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
+import { useDeepCompareEffect } from 'ahooks';
 
 import { DatasourceCateEnum } from '@/utils/constant';
 import { IRawTimeRange } from '@/components/TimeRangePicker';
@@ -34,6 +35,7 @@ import { IVariable } from './definition';
 import DisplayItem from './DisplayItem';
 import EditItems from './EditItems';
 import datasource from './datasource';
+import type { QueryOptionInput } from '../Variables/types';
 import './index.less';
 
 interface IProps {
@@ -45,6 +47,13 @@ interface IProps {
   onOpenFire?: () => void;
   isPreview?: boolean;
   dashboard: Dashboard;
+}
+
+function sortAndDeduplicateScalarOptions(options: QueryOptionInput[]) {
+  if (options.every((option) => typeof option === 'string' || typeof option === 'number' || typeof option === 'boolean')) {
+    return _.sortBy(_.uniq(options));
+  }
+  return options;
 }
 
 function includes(
@@ -116,7 +125,7 @@ function index(props: IProps) {
     return null;
   };
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     if (value) {
       let result: IVariable[] = [];
       (async () => {
@@ -144,7 +153,7 @@ function index(props: IProps) {
                     isEscapeJsonString: true,
                   })
                 : item.definition;
-            let options: string[] = [];
+            let options: QueryOptionInput[] = [];
 
             /**
              * v8
@@ -166,8 +175,7 @@ function index(props: IProps) {
                   id,
                   groupedDatasourceList,
                 );
-                options = datasourceCate === 'prometheus' ? _.sortBy(_.uniq(options)) : _.uniq(options);
-                options = _.map(options, _.toString); // 2024-09-03 统一将选项转为字符串，以防一些数据返回非字符串类型，比如 ES 的 status: 200
+                options = sortAndDeduplicateScalarOptions(options);
               } catch (error) {
                 console.error(error);
               }
@@ -184,8 +192,7 @@ function index(props: IProps) {
                     definition,
                   },
                 });
-                options = _.sortBy(_.uniq(options));
-                options = _.map(options, _.toString);
+                options = sortAndDeduplicateScalarOptions(options);
               } catch (error) {
                 console.error(error);
               }
@@ -322,7 +329,7 @@ function index(props: IProps) {
         setLoading(false);
       })();
     }
-  }, [JSON.stringify(value), refreshFlag, JSON.stringify(range)]);
+  }, [value, refreshFlag, range]);
 
   return (
     <div className='tag-area'>

@@ -11,7 +11,7 @@ const zh_HK = {
   name_placeholder: '請輸入規則名稱',
   group_id_placeholder: '請選擇業務組',
   note_placeholder: '可填寫告警觸發時的處理建議、關聯文檔鏈接或值班安排等補充信息',
-  search_placeholder: '搜尋名稱或標籤',
+  search_placeholder: '搜尋名稱、標籤或查詢語句',
   status_triggered: '告警中',
   status_normal: '無告警',
   notify_rule_not_found: '未找到對應的通知規則',
@@ -152,6 +152,7 @@ const zh_HK = {
   invalid_datasource_tip_1: '數據源',
   invalid_datasource_tip_2: '未配置關聯告警引擎集群',
   invalid_datasource_reload: '刷新數據源',
+  all_datasources: '全部數據源',
   advanced_settings: '輔助配置',
   host: {
     query: {
@@ -211,6 +212,7 @@ const zh_HK = {
       copy: '複製 JSON 內容到剪貼簿',
     },
     update: {
+      service_cal_legacy_cleared: '所選規則中有 {{num}} 條配置了已廢棄的規則級生效時段，本次操作會將其一併清除',
       title: '更新告警規則',
       name: '批量更新',
       field: '字段',

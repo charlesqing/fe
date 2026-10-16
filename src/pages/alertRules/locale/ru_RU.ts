@@ -11,7 +11,7 @@ const ru_RU = {
   name_placeholder: 'Введите название правила',
   group_id_placeholder: 'Выберите бизнес-группу',
   note_placeholder: 'Укажите рекомендации по обработке, ссылки на документацию или информацию о дежурстве',
-  search_placeholder: 'Поиск по названию или тегам',
+  search_placeholder: 'Название, теги или запрос',
   status_triggered: 'Сработало',
   status_normal: 'Нет срабатываний',
   notify_rule_not_found: 'Соответствующее правило уведомления не найдено',
@@ -152,6 +152,7 @@ const ru_RU = {
   invalid_datasource_tip_1: 'Источник данных',
   invalid_datasource_tip_2: 'Не настроен связанный кластер движка оповещений',
   invalid_datasource_reload: 'Обновить источник данных',
+  all_datasources: 'Все источники данных',
   advanced_settings: 'Дополнительные настройки',
   host: {
     query: {
@@ -213,6 +214,7 @@ const ru_RU = {
       copy: 'Копировать содержимое JSON в буфер обмена',
     },
     update: {
+      service_cal_legacy_cleared: 'У {{num}} из выбранных правил задано устаревшее время действия на уровне правила. Эта операция удалит его.',
       title: 'Обновить правила оповещений',
       name: 'Массовое обновление',
       field: 'Поле',

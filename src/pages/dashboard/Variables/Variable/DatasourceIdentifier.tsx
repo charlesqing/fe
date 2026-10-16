@@ -11,13 +11,14 @@ import stringToRegex from '../utils/stringToRegex';
 import { buildVariableInterpolations } from '../utils/ajustData';
 import { formatString } from '../utils/formatString';
 import { useVariableManager } from '../VariableManagerContext';
+import { hasDatasourceIdentifier } from '../utils/datasourceIdentifier';
 import { Props } from './types';
 
 export default function DatasourceIdentifier(props: Props) {
   const { datasourceList, groupedDatasourceList } = useContext(CommonStateContext);
   const [range] = useGlobalState('range');
 
-  const { hide, item: variable, variableValueFixed, value, setValue } = props;
+  const { disabled, hide, item: variable, variableValueFixed, value, setValue } = props;
   const { name, label, options } = variable;
 
   const { getVariables, updateVariable, registerVariable, registeredVariables } = useVariableManager();
@@ -44,20 +45,17 @@ export default function DatasourceIdentifier(props: Props) {
       range: currentRange,
     });
 
-    let currentDatasourceList = currentVariable.definition
-      ? _.filter(groupedDatasourceList[currentVariable.definition] as any, (item) => {
-          return item.identifier;
-        })
-      : [];
+    let currentDatasourceList = currentVariable.definition ? (groupedDatasourceList[currentVariable.definition] ?? []).filter(hasDatasourceIdentifier) : [];
     const formatedRegex = currentVariable.regex ? formatString(currentVariable.regex, variableInterpolations) : '';
     const regex = stringToRegex(formatedRegex);
     if (regex) {
-      currentDatasourceList = _.filter(currentDatasourceList, (option) => {
+      currentDatasourceList = currentDatasourceList.filter((option) => {
+        regex.lastIndex = 0;
         return regex.test(option.identifier);
       });
     }
     const itemOptions = _.map(currentDatasourceList, (ds) => {
-      return { label: ds.name, value: ds.identifier as string };
+      return { label: ds.identifier, value: ds.identifier };
     });
 
     updateVariable(name, {
@@ -97,6 +95,7 @@ export default function DatasourceIdentifier(props: Props) {
     <div className={hide ? 'hidden' : ''}>
       <InputGroupWithFormItem label={label || name}>
         <Select
+          disabled={disabled}
           style={{
             width: '180px',
           }}
@@ -106,16 +105,16 @@ export default function DatasourceIdentifier(props: Props) {
           dropdownMatchSelectWidth={false}
           value={value}
           onChange={(newValue) => {
-            setValue(newValue as any);
+            setValue(newValue);
             updateVariable(name, {
               value: newValue,
             });
           }}
           optionFilterProp='children'
         >
-          {_.map(options as any, (item) => (
+          {options?.map((item) => (
             <Select.Option key={item.value} value={item.value}>
-              {item.identifier}
+              {item.label}
             </Select.Option>
           ))}
         </Select>

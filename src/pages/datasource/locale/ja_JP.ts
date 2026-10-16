@@ -200,7 +200,7 @@ const ja_JP = {
     explore_hint: 'このデータソースを選択した状態でクエリ画面を新しいタブで開きます',
     create_dashboard_hint: 'ダッシュボード一覧を新しいタブで開きます。ビジネスグループを選んでから作成してください',
     create_alert_hint: 'アラートルール一覧を新しいタブで開きます。ビジネスグループを選んでから作成してください',
-    pro_only: 'エンタープライズ版が必要',
+    pro_only: 'まだ対応していません',
     type_unsupported: 'このタイプのデータソースではこの操作に対応していません',
     ds_disabled: 'このデータソースは無効です',
     ds_disabled_desc: '無効の間はデータ診断を実行せず、参照しているアラートルールも評価されません。',
@@ -242,6 +242,8 @@ const ja_JP = {
     no_busi_group: 'ビジネスグループがありません。先に「組織」で作成してください',
     imported_dashboards: '{{count}} 個のダッシュボードをインポートしました。',
     goto_dashboards: '確認する',
+    imported_alerts: '{{count}} 件のアラートルールをインポートしました。',
+    goto_alerts: '確認する',
     already_imported: '{{name}}（インポート済み）',
     import_failed: '一部のダッシュボードのインポートに失敗しました',
     import_error: 'インポートに失敗しました。しばらくしてからもう一度お試しください',
@@ -250,7 +252,7 @@ const ja_JP = {
     pick_group: 'ルール分類',
     group_option: '{{name}}（{{count}} 件）',
     selected_count: '{{checked}} / {{total}} 件選択中',
-    datasource_bound: 'インポート時に現在のデータソース（ID: {{id}}）を自動でバインドします',
+    datasource_bound: 'インポート時にデータソース「{{name}}」を自動でバインドします',
   },
 };
 

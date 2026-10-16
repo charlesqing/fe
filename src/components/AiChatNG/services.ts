@@ -34,14 +34,24 @@ export const deleteChat = (chatId: string): Promise<void> => {
   }).then(() => undefined);
 };
 
+export const renameChat = (data: { chat_id: string; title: string }): Promise<void> => {
+  return request(`${apiPrefix}/chat/rename`, {
+    method: RequestMethod.Post,
+    data,
+  }).then(() => undefined);
+};
+
 export const sendMessage = (data: IAiChatSendMessageRequest): Promise<IAiChatSendMessageResponse> => {
   return request(`${apiPrefix}/message/new`, {
     method: RequestMethod.Post,
     data: {
       ...data,
+      // The backend reads the page's actions off the query, not the envelope.
+      page_actions: undefined,
       query: {
         ...data.query,
         action: _.omit(data.query.action, 'key'), // 不再需要传入 action key
+        page_actions: data.page_actions,
       },
     },
   }).then((res) => res?.[dataPathName]);

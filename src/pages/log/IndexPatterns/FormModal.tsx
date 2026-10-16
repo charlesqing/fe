@@ -144,6 +144,7 @@ function FormModal(props: Props & ModalWrapProps) {
           destroy();
         }
       }}
+      className='n9e-antd-drawer'
     >
       <Row gutter={32}>
         <Col span={12}>
@@ -227,7 +228,20 @@ function FormModal(props: Props & ModalWrapProps) {
             >
               <Input ref={inputRef} />
             </Form.Item>
-            <Form.Item name='time_field' label={t('time_field')}>
+            <Form.Item
+              name='time_field'
+              label={t('time_field')}
+              rules={
+                mode === 'create'
+                  ? [
+                      {
+                        required: true,
+                        message: t('time_field_msg'),
+                      },
+                    ]
+                  : undefined
+              }
+            >
               <Select
                 allowClear
                 options={_.map(dateFields, (field) => {
@@ -247,7 +261,7 @@ function FormModal(props: Props & ModalWrapProps) {
 
             <Form.Item>
               <Button type='primary' htmlType='submit'>
-                {mode === 'create' ? t('common:btn.create') : t('common:btn.edit')}
+                {mode === 'create' ? t('common:btn.create') : t('common:btn.save')}
               </Button>
             </Form.Item>
           </Form>

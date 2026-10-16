@@ -2,7 +2,10 @@
  * 各数据源的查询方法
  */
 
+import type { QueryOptionInput } from '@/pages/dashboard/Variables/types';
 import { DatasourceCateEnum } from '@/utils/constant';
+import type { IRawTimeRange } from '@/components/TimeRangePicker';
+import type { JsonValue } from '@/pages/dashboard/types';
 import prometheus from '@/plugins/prometheus/Dashboard/variableDatasource';
 import elasticsearch from '@/plugins/elasticsearch/Dashboard/variableDatasource';
 import clickHouse from '@/plugins/clickHouse/Dashboard/VariableDatasource';
@@ -10,14 +13,20 @@ import clickHouse from '@/plugins/clickHouse/Dashboard/VariableDatasource';
 // @ts-ignore
 import variableDatasourcePro from 'plus:/parcels/Dashboard/variableDatasource';
 
-export interface Props<QueryType = any> {
+export type VariableDatasourceQuery = Record<string, JsonValue | IRawTimeRange | { index: string; date_field: string } | undefined>;
+
+export interface Props<QueryType = VariableDatasourceQuery> {
   datasourceCate: string;
   datasourceValue: number;
-  datasourceList: any[];
+  datasourceList: import('../types').DashboardDatasource[];
   query: QueryType;
+  variableContext?: {
+    variables: import('./types').IVariable[];
+    query: VariableDatasourceQuery;
+  };
 }
 
-export default async function datasource(props: Props) {
+export default async function datasource(props: Props): Promise<QueryOptionInput[]> {
   const { datasourceCate } = props;
   if (datasourceCate === DatasourceCateEnum.prometheus) {
     return prometheus(props);
@@ -28,6 +37,5 @@ export default async function datasource(props: Props) {
   if (datasourceCate === DatasourceCateEnum.ck) {
     return clickHouse(props);
   }
-
   return await variableDatasourcePro(props);
 }

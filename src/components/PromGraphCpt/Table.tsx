@@ -8,13 +8,14 @@ import { useTranslation } from 'react-i18next';
 import { json2csv } from 'json-2-csv';
 
 import UnitPicker from '@/pages/dashboard/Components/UnitPicker';
-import valueFormatter from '@/pages/dashboard/Renderer/utils/valueFormatter';
 import { instantInterpolateString } from '@/components/PromQLInputNG';
 import InputGroupWithFormItem from '@/components/InputGroupWithFormItem';
 import { downloadFile } from '@/pages/alertRules/List/utils';
 
 import { getPromData } from './services';
+import type { QueryRequest } from '@/components/AiQueryDock/usePendingQuery';
 import { QueryStats } from './components/QueryStatsView';
+import { formatPrometheusValue } from './value';
 
 interface IProps {
   url: string;
@@ -35,6 +36,9 @@ interface IProps {
   seriesFilterText?: string;
   onSeriesFilterTextChange?: (value: string) => void;
   onQueryRequest?: () => void;
+  queryRequest?: QueryRequest;
+  queryPaused?: boolean;
+  onQueryContextChange?: () => void;
 }
 type ResultType = 'matrix' | 'vector' | 'scalar' | 'string' | 'streams';
 
@@ -82,19 +86,12 @@ function toFixedNoRound(num1 = 0, num2 = 0) {
   return _.toNumber(num1Str) - _.toNumber(num2Str);
 }
 
-function formatValue(val, unit) {
-  const num = _.toNumber(val);
-  if (_.isNaN(num)) return '-';
-  const { text } = valueFormatter({ unit }, num);
-  return text;
-}
-
 function getListItemValue(resultType, record, unit) {
   if (resultType === 'scalar' || resultType === 'string') {
-    return formatValue(_.get(record, '[1]'), unit);
+    return formatPrometheusValue(_.get(record, '[1]'), unit);
   }
   if (resultType === 'vector') {
-    return formatValue(_.get(record, 'value[1]'), unit);
+    return formatPrometheusValue(_.get(record, 'value[1]'), unit);
   }
   if (resultType === 'matrix' || resultType === 'streams') {
     const values = _.get(record, 'values');
@@ -104,7 +101,7 @@ function getListItemValue(resultType, record, unit) {
           const timestamp = _.get(value, 0);
           return (
             <div key={i} style={{ display: 'table-row' }}>
-              <span style={{ display: 'table-cell', padding: '0 4px' }}>{formatValue(_.get(value, 1), unit)}</span>
+              <span style={{ display: 'table-cell', padding: '0 4px' }}>{formatPrometheusValue(_.get(value, 1), unit)}</span>
               <span style={{ display: 'table-cell', padding: '0 4px' }}>@{timestamp || '-'}</span>
               <span style={{ display: 'table-cell', padding: '0 4px' }}>{moment.unix(timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
               <span style={{ display: 'table-cell', padding: '0 4px' }}>{i > 0 ? `+${toFixedNoRound(timestamp, _.get(values[i - 1], 0))}` : ''}</span>
@@ -137,6 +134,9 @@ export default function Table(props: IProps) {
     seriesFilterText: controlledSeriesFilterText,
     onSeriesFilterTextChange,
     onQueryRequest,
+    queryRequest,
+    queryPaused,
+    onQueryContextChange,
   } = props;
   const [data, setData] = useState<{
     resultType: ResultType;
@@ -202,20 +202,40 @@ export default function Table(props: IProps) {
   );
 
   useEffect(() => {
+    if (queryPaused || queryRequest?.signal.aborted) return;
+    if (!promql) {
+      setData({ resultType: 'matrix', result: [] });
+      setLoading(false);
+      return;
+    }
     if (datasourceValue && promql) {
+      const controller = new AbortController();
+      let settled = false;
+      const abort = () => {
+        controller.abort();
+        setLoading(false);
+        if (!settled) queryRequest?.complete(new DOMException('Query stopped', 'AbortError'));
+      };
+      queryRequest?.signal.addEventListener('abort', abort, { once: true });
       onQueryRequest?.();
       const queryStart = Date.now();
       setLoading(true);
-      getPromData(`${url}/${datasourceValue}/api/v1/query`, {
-        time: timestamp || moment().unix(),
-        query: instantInterpolateString({
-          query: promql,
-          time: timestamp ? moment.unix(timestamp) : undefined,
-        }),
-      })
+      getPromData(
+        `${url}/${datasourceValue}/api/v1/query`,
+        {
+          time: timestamp || moment().unix(),
+          query: instantInterpolateString({
+            query: promql,
+            time: timestamp ? moment.unix(timestamp) : undefined,
+          }),
+        },
+        controller.signal,
+      )
         .then((res) => {
+          if (controller.signal.aborted) return;
           const { resultType } = res;
           let { result } = res;
+          const empty = !result || result.length === 0;
           // 保存全量原始数据用于 CSV 导出
           rawResultRef.current = result;
           let tooLong = false;
@@ -251,16 +271,26 @@ export default function Table(props: IProps) {
               loadTime: Date.now() - queryStart,
               resultSeries: result.length,
             });
+          settled = true;
+          queryRequest?.complete({ empty, count: result.length });
         })
         .catch((err) => {
+          if (controller.signal.aborted) return;
           const msg = _.get(err, 'message');
           setErrorContent(`Error executing query: ${msg}`);
+          settled = true;
+          queryRequest?.complete(err instanceof Error ? err : new Error(String(msg || err)));
         })
         .finally(() => {
+          if (controller.signal.aborted) return;
           setLoading(false);
         });
+      return () => {
+        queryRequest?.signal.removeEventListener('abort', abort);
+        abort();
+      };
     }
-  }, [timestamp, datasourceValue, promql, refreshFlag, onQueryRequest]);
+  }, [timestamp, datasourceValue, promql, refreshFlag, onQueryRequest, url, queryRequest, queryPaused]);
 
   useEffect(() => {
     if (defaultUnit) {
@@ -317,16 +347,13 @@ export default function Table(props: IProps) {
       {controlsPortalDomNode ? createPortal(controls, controlsPortalDomNode) : controls}
       <AntdTable
         className='prom-graph-table-list'
-        style={{
-          maxHeight: contentMaxHeight,
-        }}
         size='small'
         loading={loading}
         rowKey={(_record, index) => index!}
         dataSource={filteredResult}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={filteredResult.length > 0 ? { x: 'max-content', y: contentMaxHeight } : undefined}
       />
     </div>
   );

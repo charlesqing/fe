@@ -34,6 +34,9 @@ function Jobs() {
   return null;
 }
 
+const MCPServerList = PlusePlaceholder;
+const AiTaskPage = PlusePlaceholder;
+
 const advancedCates = [];
 const envCateMap = {};
 enum AdvancedDatasourceCateEnum {}
@@ -47,6 +50,14 @@ const getDefaultValuesByCate = () => {};
 const autoDatasourcetype = [];
 const AuthList = [];
 const extraColumns = () => {};
+// 主机拓扑（plus 功能）。命名导入必须在这里有对应物，否则开源构建缺符号。
+// 调用点都由 IS_PLUS 守着，开源构建下这几个不会被真正用到。
+const HostTopoViewSwitch = PlusePlaceholder;
+const HostTopoGlobalGraph = PlusePlaceholder;
+const HostTopoDrawerTab = PlusePlaceholder;
+const HostTopoCenterSelect = PlusePlaceholder;
+const HostTopoCollectSetup = PlusePlaceholder;
+const readHostTopoViewMode = () => 'list';
 const getNetworkDevices = () => {};
 const getNetworkDevicesList = () => {};
 const getNetworkDevicesTags = () => {};
@@ -87,6 +98,8 @@ export {
   EventPreview,
   Explorer,
   Jobs,
+  MCPServerList,
+  AiTaskPage,
   advancedCates,
   envCateMap,
   AdvancedDatasourceCateEnum,
@@ -96,6 +109,12 @@ export {
   autoDatasourcetype,
   AuthList,
   extraColumns,
+  HostTopoViewSwitch,
+  HostTopoGlobalGraph,
+  HostTopoDrawerTab,
+  HostTopoCenterSelect,
+  HostTopoCollectSetup,
+  readHostTopoViewMode,
   getNetworkDevices,
   getNetworkDevicesList,
   getNetworkDevicesTags,
@@ -112,3 +131,6 @@ export {
   getProject,
   getTopic,
 };
+
+// 开源版没有 Plus 变量扩展，公共注册表仍然有效。
+export const dashboardVariablePlugins: Record<string, import('../src/pages/dashboard/Variables/pluginTypes').DashboardVariablePlugin> = {};

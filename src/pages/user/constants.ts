@@ -17,7 +17,7 @@ import i18next from 'i18next';
  * limitations under the License.
  *
  */
-export const LOCAL_STORAGE_KEY = 'users_columns_configs';
+export const LOCAL_STORAGE_KEY = 'users_columns_configs_v2';
 export const defaultColumnsConfigs = [
   {
     name: 'username',
@@ -60,8 +60,18 @@ export const defaultColumnsConfigs = [
     visible: true,
   },
   {
+    name: 'disabled',
+    i18nKey: 'user.status',
+    visible: true,
+  },
+  {
     name: 'create_at',
     i18nKey: 'common:table.create_at',
+    visible: true,
+  },
+  {
+    name: 'last_active_time',
+    i18nKey: 'user.last_active_time',
     visible: true,
   },
 ];

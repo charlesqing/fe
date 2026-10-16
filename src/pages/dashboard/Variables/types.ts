@@ -1,4 +1,6 @@
-export interface IVariable<QueryType = any> {
+import type { JsonObject } from '../types';
+
+export interface IVariable<QueryType = JsonObject> {
   name: string;
   label?: string;
   definition: string;
@@ -8,10 +10,7 @@ export interface IVariable<QueryType = any> {
   multi?: boolean;
   allOption?: boolean;
   allValue?: string;
-  options?: {
-    label: string;
-    value: string;
-  }[];
+  options?: VariableOption[];
   type: 'query' | 'textbox' | 'custom' | 'constant' | 'datasource' | 'datasourceIdentifier' | 'hostIdent';
   defaultValue?: string | number; // textbox 和 datasource 的默认值
   datasource: {
@@ -27,7 +26,7 @@ export interface IVariable<QueryType = any> {
     date_field: string; // elasticsearch 源的时间字段配置
   };
   width?: number; // v9 新增，设置变量宽度
-  value?: number | string | string[] | number; // 变量的值, 只有 datasource 的值是 number 类型
+  value?: number | string | Array<string | number>; // 变量的值, datasource 变量可使用数字 ID
   hide?: boolean; // v6 新增，用于隐藏变量
   query?: QueryType; // v8 新增，用于规范各类数据的查询条件
 }
@@ -42,4 +41,22 @@ export interface VariableExecutionMeta {
 // 依赖关系图
 export interface DependencyGraph {
   [key: string]: string[]; // key: 变量名, value: 依赖它的变量列表
+}
+
+/** 查询插件返回的选项；业务对象须由插件转换为 label/value。 */
+export interface QueryOptionMetadata {
+  /** GCM 指标描述；仅运行时选项使用，不参与变量值或持久化配置。 */
+  metricDescription?: string;
+}
+
+export interface VariableOption extends QueryOptionMetadata {
+  label: string;
+  value: string | number;
+}
+
+export type QueryOptionInput = string | number | boolean | VariableOption;
+
+/** 查询变量的实际值统一为字符串，不影响其他变量类型的数字值。 */
+export interface QueryOption extends VariableOption {
+  value: string;
 }

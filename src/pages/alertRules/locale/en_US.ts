@@ -11,7 +11,7 @@ const en_US = {
   name_placeholder: 'Please enter rule name',
   group_id_placeholder: 'Please select business group',
   note_placeholder: 'Provide handling suggestions, related docs, or on-call info when alert triggers',
-  search_placeholder: 'Search by name or tags',
+  search_placeholder: 'Name, tags or query',
   status_triggered: 'Triggered',
   status_normal: 'Normal',
   notify_rule_not_found: 'Corresponding notification rule not found',
@@ -150,6 +150,7 @@ const en_US = {
   invalid_datasource_tip_1: 'Data sources',
   invalid_datasource_tip_2: 'are not associated with any alerting engine cluster',
   invalid_datasource_reload: 'Reload',
+  all_datasources: 'All data sources',
   advanced_settings: 'Advanced settings',
   host: {
     query: {
@@ -209,6 +210,7 @@ const en_US = {
       copy: 'Copy JSON content to clipboard',
     },
     update: {
+      service_cal_legacy_cleared: '{{num}} of the selected rules still use the deprecated rule-level effective time. This operation will clear it.',
       title: 'Update alert rules',
       name: 'Update alert rules',
       field: 'Field',

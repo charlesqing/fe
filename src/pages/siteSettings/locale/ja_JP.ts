@@ -15,8 +15,8 @@ const ja_JP = {
   site_url_tip: '夜莺に外部からアクセスするためのアドレスです。バックエンドはこれを使用して、夜莺インスタンスにアクセスできるリンクを生成できます',
   page_title: 'サイトのタイトル',
   page_title_tip: 'デフォルトのタイトル (Nightingale) をオーバーライドします',
-  home_page_url: 'ホームページのURL',
-  home_page_url_tip: 'ホームページのURLをオーバーライドします (/metric/explorer)',
+  home_page_url: 'デフォルトアクセスURL',
+  home_page_url_tip: 'ルートパス / へのアクセス時に設定したURLへリダイレクトします。デフォルト値：/landing',
   displayMode: {
     tree: 'ツリービュー',
     list: 'リストビュー',
@@ -32,6 +32,7 @@ const ja_JP = {
   print_access_log: 'アクセスログを印刷',
   print_body_paths: 'リクエストボディパスを印刷',
   font_family: 'フォント',
+  alert_severity_names: 'アラートレベル名をカスタマイズ',
 };
 
 export default ja_JP;

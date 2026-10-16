@@ -193,7 +193,7 @@ const zh_HK = {
     explore_hint: '在新分頁開啟即時查詢，已為你帶上這個資料來源',
     create_dashboard_hint: '在新分頁開啟儀表盤列表，選擇業務組後即可新建',
     create_alert_hint: '在新分頁開啟告警規則列表，選擇業務組後即可新建',
-    pro_only: '需企業版',
+    pro_only: '暫不支持',
     type_unsupported: '該類型資料來源暫不支持此操作',
     ds_disabled: '該資料來源已停用',
     ds_disabled_desc: '停用期間不執行數據體檢，引用它的告警規則也不會評估。',
@@ -235,6 +235,8 @@ const zh_HK = {
     no_busi_group: '還沒有業務組，請先到「人員組織」建立一個',
     imported_dashboards: '已導入 {{count}} 個儀表盤。',
     goto_dashboards: '去查看',
+    imported_alerts: '已導入 {{count}} 條告警規則。',
+    goto_alerts: '去查看',
     already_imported: '{{name}}（已導入）',
     import_failed: '部分儀表盤導入失敗',
     import_error: '導入失敗，請稍後重試',
@@ -243,7 +245,7 @@ const zh_HK = {
     pick_group: '規則分類',
     group_option: '{{name}}（{{count}} 條）',
     selected_count: '已選 {{checked}} / {{total}}',
-    datasource_bound: '導入時將自動綁定當前資料來源（ID: {{id}}）',
+    datasource_bound: '導入時將自動綁定資料來源「{{name}}」',
   },
 };
 

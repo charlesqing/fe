@@ -8,8 +8,31 @@ jest.mock('lodash', () => {
   };
 });
 
-import { isValidPanelConfig, updatePanelsInsertNewPanelToRow, updatePanelsInsertNewPanelToGlobal } from './utils';
+import { buildLayout, canEditPanelLayout, handleRowToggle, isValidPanelConfig, updatePanelsInsertNewPanelToRow, updatePanelsInsertNewPanelToGlobal } from './utils';
 import { IPanel } from '../types';
+
+describe('buildLayout', () => {
+  const panels = [
+    { id: 'chart-1', type: 'timeseries', layout: { x: 0, y: 0, w: 12, h: 4, i: 'chart-1' } },
+    { id: 'row-1', type: 'row', layout: { x: 0, y: 4, w: 24, h: 1, i: 'row-1' } },
+  ] as IPanel[];
+
+  it('hides all resize handles in read-only mode', () => {
+    expect(buildLayout(panels)).toEqual([expect.objectContaining({ isResizable: true }), expect.objectContaining({ isResizable: false })]);
+    expect(buildLayout(panels, true)).toEqual([expect.objectContaining({ isResizable: false }), expect.objectContaining({ isResizable: false })]);
+  });
+});
+
+describe('canEditPanelLayout', () => {
+  it.each([
+    [true, true, true],
+    [false, true, false],
+    [true, false, false],
+    [false, false, false],
+  ])('requires both editability and dashboard write permission', (editable, isAuthorized, expected) => {
+    expect(canEditPanelLayout(editable, isAuthorized)).toBe(expected);
+  });
+});
 
 describe('isValidPanelConfig', () => {
   it('returns true for valid panel config JSON', () => {
@@ -119,6 +142,29 @@ describe('updatePanelsInsertNewPanelToRow', () => {
     const result = updatePanelsInsertNewPanelToRow(panels, 'row-1', pastedPanel, false);
     expect(result[0].layout.w).toBe(12);
     expect(result[0].layout.h).toBe(4);
+  });
+});
+
+describe('handleRowToggle', () => {
+  const row: IPanel = {
+    id: 'row-1',
+    type: 'row',
+    name: 'Group',
+    collapsed: false,
+    layout: { x: 0, y: 0, w: 24, h: 1, i: 'row-1' },
+  };
+  const chart: IPanel = {
+    id: 'chart-1',
+    type: 'timeseries',
+    layout: { x: 0, y: 1, w: 12, h: 4, i: 'chart-1' },
+  };
+
+  it('uses true for collapsed and false for expanded', () => {
+    const collapsed = handleRowToggle(true, [row, chart], row);
+    expect(collapsed).toEqual([expect.objectContaining({ id: 'row-1', collapsed: true, panels: [expect.objectContaining({ id: 'chart-1' })] })]);
+
+    const expanded = handleRowToggle(false, collapsed, collapsed[0]);
+    expect(expanded).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'row-1', collapsed: false, panels: [] }), expect.objectContaining({ id: 'chart-1' })]));
   });
 });
 

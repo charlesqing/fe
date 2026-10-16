@@ -17,7 +17,7 @@ export default function Datasource(props: Props) {
   const { datasourceList, groupedDatasourceList } = useContext(CommonStateContext);
   const [range] = useGlobalState('range');
 
-  const { hide, item: variable, variableValueFixed, value, setValue } = props;
+  const { disabled, hide, item: variable, variableValueFixed, value, setValue } = props;
   const { name, label, options } = variable;
 
   const { getVariables, updateVariable, registerVariable, registeredVariables } = useVariableManager();
@@ -44,7 +44,7 @@ export default function Datasource(props: Props) {
       range: currentRange,
     });
 
-    let currentDatasourceList = currentVariable.definition ? (groupedDatasourceList[currentVariable.definition] as any) : [];
+    let currentDatasourceList = currentVariable.definition ? groupedDatasourceList[currentVariable.definition] ?? [] : [];
     const formatedRegex = currentVariable.regex ? formatString(currentVariable.regex, variableInterpolations) : '';
     const regex = stringToRegex(formatedRegex);
     if (regex) {
@@ -53,7 +53,7 @@ export default function Datasource(props: Props) {
       });
     }
     const itemOptions = _.map(currentDatasourceList, (ds) => {
-      return { label: ds.name, value: ds.id as any }; // TODO value 实际是 number 类型
+      return { label: ds.name, value: ds.id };
     });
 
     updateVariable(name, {
@@ -93,6 +93,7 @@ export default function Datasource(props: Props) {
     <div className={hide ? 'hidden' : ''}>
       <InputGroupWithFormItem label={label || name}>
         <Select
+          disabled={disabled}
           style={{
             width: '180px',
           }}
@@ -102,14 +103,14 @@ export default function Datasource(props: Props) {
           dropdownMatchSelectWidth={false}
           value={value}
           onChange={(newValue) => {
-            setValue(newValue as any);
+            setValue(newValue);
             updateVariable(name, {
               value: newValue,
             });
           }}
           optionFilterProp='children'
         >
-          {_.map(options as any, (item) => (
+          {options?.map((item) => (
             <Select.Option key={item.value} value={item.value}>
               {item.label}
             </Select.Option>

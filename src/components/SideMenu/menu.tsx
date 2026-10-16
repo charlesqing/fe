@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { RobotOutlined } from '@ant-design/icons';
+import { Sparkles } from 'lucide-react';
 
 import IconFont from '@/components/IconFont';
 
@@ -12,17 +13,10 @@ import './locale';
 export const getMenuList = (embeddedProductMenu: MenuItem[] = [], hideDeprecatedMenus: boolean = false) => {
   const menu: MenuItem[] = [
     {
-      key: 'infrastructure',
-      label: 'menu.infrastructure',
-      icon: <IconFont type='icon-nav_devicelist_light' />,
-      children: [
-        {
-          key: 'devices',
-          label: 'menu.devices',
-          type: 'tabs',
-          children: [{ key: '/targets', label: 'menu.targets' }],
-        },
-      ],
+      key: '/nightingale-ai',
+      label: 'menu.nightingale_ai',
+      icon: <Sparkles className='-ml-0.5 h-4 w-4' strokeWidth={1.8} />,
+      children: [],
     },
     {
       key: 'explorer',
@@ -123,6 +117,19 @@ export const getMenuList = (embeddedProductMenu: MenuItem[] = [], hideDeprecated
       ],
     },
     {
+      key: 'infrastructure',
+      label: 'menu.infrastructure',
+      icon: <IconFont type='icon-nav_devicelist_light' />,
+      children: [
+        {
+          key: 'devices',
+          label: 'menu.devices',
+          type: 'tabs',
+          children: [{ key: '/targets', label: 'menu.targets' }],
+        },
+      ],
+    },
+    {
       key: 'integrations',
       label: 'menu.integrations',
       icon: <IconFont type='icon-nav_infrastructure_light' />,
@@ -140,17 +147,6 @@ export const getMenuList = (embeddedProductMenu: MenuItem[] = [], hideDeprecated
           label: 'menu.embedded_products',
         },
         ...embeddedProductMenu,
-      ],
-    },
-    {
-      key: 'ai-config',
-      label: 'menu.ai_config',
-      type: 'tabs',
-      icon: <RobotOutlined />,
-      children: [
-        { key: '/ai-config/agents', label: 'menu.ai_config_agents' },
-        { key: '/ai-config/llm-configs', label: 'menu.ai_config_llm_configs' },
-        { key: '/ai-config/skills', label: 'menu.ai_config_skills' },
       ],
     },
     {

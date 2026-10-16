@@ -15,8 +15,8 @@ const zh_CN = {
   site_url_tip: '用于外部访问夜莺的地址，后端可用此生成可访问到夜莺实例的链接',
   page_title: '站点标题',
   page_title_tip: '覆盖默认的标题 (Nightingale)',
-  home_page_url: '首页地址',
-  home_page_url_tip: '覆盖首页地址 (/metric/explorer)',
+  home_page_url: '默认访问地址',
+  home_page_url_tip: '访问根路径 / 跳转到用户设置的地址，默认值为：/landing',
   displayMode: {
     tree: '树形',
     list: '列表',
@@ -32,5 +32,6 @@ const zh_CN = {
   print_access_log: '开启 Access Log',
   print_body_paths: '打印请求 Body 路径',
   font_family: '字体',
+  alert_severity_names: '自定义告警等级命名',
 };
 export default zh_CN;

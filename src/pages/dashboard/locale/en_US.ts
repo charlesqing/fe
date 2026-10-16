@@ -41,6 +41,49 @@ const en_US = {
       light: 'Light theme',
     },
   },
+  sharing_link: {
+    title: 'Generate sharing link',
+    title_anonymous: 'Sharing link (anonymous access)',
+    allow_anonymous: 'Allow anonymous access without login',
+    expire_at: 'Expiration',
+    theme: 'Theme',
+    theme_default: 'System',
+    theme_dark: 'Dark',
+    theme_light: 'Light',
+    note: 'Note',
+    note_placeholder: 'Note (required), e.g. for customer review',
+    generate: 'Generate link',
+    link: 'Sharing link',
+    expire_time: 'Expires at',
+    expired: 'expired',
+    create_by: 'Created by',
+    revoke: 'Revoke',
+    revoke_confirm: 'The link stops working immediately after revoking. Continue?',
+    revoked: 'Revoked',
+    anonymous_tip: 'Anyone with the link can view this dashboard and query its referenced datasources until the link expires. Share with care',
+    recommend_tip:
+      'Anonymous access works through the link below: anyone with it can view this dashboard without logging in until it expires. For long-term exposure, set the expiration in years',
+    unit_hour: 'Hour(s)',
+    unit_day: 'Day(s)',
+    unit_month: 'Month(s)',
+    unit_year: 'Year(s)',
+    fetch_failed: 'Failed to load sharing links',
+    generate_failed: 'Failed to generate sharing link',
+    expire_out_of_range: 'Expiration is beyond the displayable range (effectively never expires); revoke it and generate a new one',
+    set_public_confirm_title: 'Also set this dashboard to "Public - Anonymous access"?',
+    set_public_confirm_content:
+      'A sharing link opens this dashboard without login as soon as it is generated, and stays valid regardless of the public setting. If the public setting is not updated, the "Public" column in the list will not show anonymous access, leaving administrators unaware that the dashboard is exposed. Confirming saves the public setting as "Public - Anonymous access" first, then generates the link.',
+    set_public_confirm_ok: 'Set anonymous and generate',
+    set_public_failed: 'Failed to save the public setting; no sharing link was generated',
+    revoke_failed: 'Failed to revoke sharing link',
+    config_load_failed: 'Could not read the dashboard config, so anonymous access cannot be set up right now. Please close and retry',
+    revoke_all_confirm_title: 'Revoke all sharing links?',
+    revoke_all_confirm_content:
+      'This dashboard still has {{num}} sharing link(s) that have not expired. A link stays valid regardless of the public settings, so after switching to this type it can still open the dashboard without logging in. Confirming revokes every sharing link on this dashboard and then saves the settings. Revoking cannot be undone.',
+    revoke_all_ok: 'Revoke and save',
+    revoke_all_check_failed:
+      'Could not check whether this dashboard still has sharing links. The public settings were saved - please open the sharing link dialog and check manually',
+  },
   default_filter: {
     title: 'Preset filters',
     public: 'Public dashboards',
@@ -59,12 +102,34 @@ const en_US = {
     label: 'Dashboard JSON',
     import_grafana: 'Import Grafana dashboard (not recommended)',
     import_grafana_tip: 'Only dashboards using Prometheus data sources, and the chart types and features supported by Nightingale, can be imported <a>feedback</a>',
-    import_grafana_tip_version_error: 'Importing dashboard configs older than v7 is not supported',
-    import_grafana_tip_version_warning: 'The imported dashboard config is older than v8; some panels may not display properly. Continue importing?',
     import_grafana_url: 'Import Grafana dashboard URL',
     import_grafana_url_label: 'Grafana dashboard URL',
-    continueToImport: 'Continue to import',
+    show_time_picker: 'Show time picker',
+    show_time_picker_tip: 'Some Grafana versions hide the time picker in kiosk mode. Enable this option to use the time picker in this system.',
     noSelected: 'Please select at least one dashboard',
+    import_grafana_report: {
+      title: 'Conversion report',
+      panels: 'Panels',
+      targets: 'Targets',
+      variables: 'Variables',
+      dropped: 'Dropped',
+      unsupported: 'Unsupported items',
+      unsupported_empty: 'No unsupported configuration was found',
+      ledger: 'Migration ledger',
+      schema: 'Schema version',
+      status: 'Status',
+      version: 'Version',
+      reason: 'Reason',
+      scope: 'Scope',
+      path: 'Path',
+      action: 'Action',
+      confirm: 'Confirm import',
+      back: 'Back to edit',
+      copy: 'Copy Markdown report',
+      copied: 'Report copied',
+      convert_error: 'Conversion failed',
+      save_error: 'Save failed',
+    },
     import_builtin: 'Import built-in dashboard',
     import_builtin_board: 'Built-in dashboard',
     clone: {
@@ -113,6 +178,8 @@ const en_US = {
     reg: 'Regex',
     reg_tip: 'Optional, can filter options using a <a>regular expression literal</a>, which consists of a pattern enclosed between slashes',
     reg_tip2: 'If you want to extract a part of the options, <a>named capture groups can be used to separate display text and value</a>',
+    reg_object_tip:
+      'For options with a separate display name, the regex matches the value. Ordinary matches preserve both fields; named groups text/value override only the corresponding field.',
     multi: 'Multi select',
     allOption: 'Include all option',
     allValue: 'Custom all value',
@@ -256,6 +323,7 @@ const en_US = {
         series: 'Series',
         seriesFilter: 'Filter series',
         columns: 'Columns',
+        none: 'none',
         behaviour: {
           label: 'Click behavior',
           showItem: 'Show item',
@@ -555,6 +623,12 @@ const en_US = {
         showPoints_always: 'Always',
         showPoints_none: 'None',
         pointSize: 'Point size',
+        barAlignment: 'Bar alignment',
+        barAlignment_before: 'Before',
+        barAlignment_center: 'Center',
+        barAlignment_after: 'After',
+        barWidthFactor: 'Bar width factor',
+        barWidthFactor_tip: 'Controls the proportion of each time bucket occupied by a bar. 1 fills the bucket; 0.6 uses 60% and leaves the rest as a gap.',
       },
       iframe: {
         src: 'Src',
@@ -641,6 +715,7 @@ const en_US = {
     options_time: 'Time',
     options_time_tip: 'Specify a custom time range for the query, leave blank to use the dashboard time range',
     copy_query: 'Copy query',
+    mixed_datasource: 'Mixed datasource',
     hide_response: 'Hide response data',
   },
   migrate: {
@@ -660,6 +735,20 @@ const en_US = {
     deletePanel_confirm: 'Are you sure you want to delete the panel: {{name}}?',
     invalidPanelType: 'Invalid panel type',
     fullscreen: {
+      parameters: {
+        tooltip: `Built-in URL parameters:
+viewMode=fullscreen: enter fullscreen view.
+__show_header=true: show the header and time picker in fullscreen.
+__show_variables=true: show dashboard variables in fullscreen.
+__readonly=true: make fullscreen read-only; disables editing, drag/resize, and migration prompts.
+__disable_fullscreen_exit=true: disable the ESC exit hint and ESC exit.
+__disable_variables=region,host: disable controls for the named variables.
+__from=...&__to=...: set the global time range.
+__refresh=30: set the auto-refresh interval in seconds.
+__timezone=Asia/Shanghai: set the timezone.
+themeMode=light|dark: set the theme.
+__variable_value_fixed=true: preserve variable values from the URL without replacing them from local storage or option defaults.`,
+      },
       notification: {
         esc: 'Press ESC to exit full screen mode',
         theme: 'Switch theme',
@@ -692,6 +781,10 @@ const en_US = {
       tip: 'Control zoom behavior for all panels',
       default: 'Default',
       updateTimeRange: 'Update time range',
+    },
+    hideHeader: {
+      label: 'Hide dashboard title',
+      tip: 'Hide only the title at the top of the dashboard detail page.',
     },
     save: 'Save dashboard',
   },

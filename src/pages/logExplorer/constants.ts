@@ -25,6 +25,8 @@ export const ENABLED_VIEW_CATES = [
   DatasourceCateEnum.volcTLS,
 ];
 
+export const QUERY_INPUT_MIN_WIDTH = 400;
+
 export const TYPE_MAP: Record<string, string> = {
   float: 'number',
   float64: 'number',
@@ -42,6 +44,8 @@ export const TYPE_MAP: Record<string, string> = {
   boolean: 'boolean',
 };
 
+export const DEFAULT_FLATTEN_DEPTH = 1;
+
 export const DEFAULT_OPTIONS: OptionsType = {
   logMode: 'origin',
   lineBreak: 'false',
@@ -51,4 +55,5 @@ export const DEFAULT_OPTIONS: OptionsType = {
   jsonDisplaType: 'string',
   jsonExpandLevel: 1,
   topNumber: 5,
+  flattenDepth: DEFAULT_FLATTEN_DEPTH,
 };
