@@ -60,6 +60,26 @@ export default function FormCpt({ action, data, onFinish, submitLoading }: any) 
             </Form.Item>
           </Col>
         </Row>
+        <Row gutter={SIZE * 2}>
+          <Col span={12}>
+            <Form.Item
+              label='时间字段 (Time Field)'
+              name={['settings', `${cate}.time_field`]}
+              tooltip='OpenObserve 数据表中的时间列名，默认 _timestamp'
+            >
+              <Input autoComplete='off' placeholder='_timestamp' />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label='摄入延迟 (秒)'
+              name={['settings', `${cate}.ingest_delay`]}
+              tooltip='告警评估时把时间范围整体回拨该秒数，避免漏掉尚未被摄入的最近数据，默认 120'
+            >
+              <InputNumber controls={false} min={0} style={{ width: '100%' }} placeholder='120' />
+            </Form.Item>
+          </Col>
+        </Row>
         <BasicAuth cate={cate} />
         <Space className='mb-2'>
           <span>{t('form.skip_tls_verify')}</span>

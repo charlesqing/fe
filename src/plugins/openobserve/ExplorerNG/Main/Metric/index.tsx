@@ -262,6 +262,8 @@ export default function Metric(props: Props) {
             start: moment(range.start).unix(),
             end: moment(range.end).unix(),
             ref: 'A',
+            org: latestQueryValues?.org,
+            stream: latestQueryValues?.stream,
           },
         ],
       })
@@ -347,6 +349,8 @@ export default function Metric(props: Props) {
           end: moment(range.end).unix(),
           keys,
           ref: 'A',
+          org: queryValues?.org,
+          stream: queryValues?.stream,
         },
       ],
     })

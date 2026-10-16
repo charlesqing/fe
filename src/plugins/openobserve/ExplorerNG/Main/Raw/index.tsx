@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import _ from 'lodash';
 import moment from 'moment';
-import { Empty, message, Pagination, Space } from 'antd';
+import { Empty, message, Pagination, Select, Space } from 'antd';
 import { Form } from 'antd';
 import { useRequest } from 'ahooks';
 import { Trans, useTranslation } from 'react-i18next';
@@ -152,6 +152,8 @@ export default function Raw(props: Props) {
             offset: (serviceParams.current - 1) * serviceParams.pageSize,
             ref: 'A',
             reverse: serviceParams.reverse,
+            org: latestQueryValues?.org,
+            stream: latestQueryValues?.stream,
           },
         ],
       })
@@ -240,6 +242,8 @@ export default function Raw(props: Props) {
             query: _.trim(latestQueryValues.query || '*') || '*',
             start: moment(range.start).valueOf(),
             end: moment(range.end).valueOf(),
+            org: latestQueryValues?.org,
+            stream: latestQueryValues?.stream,
           },
         ],
       })
@@ -339,6 +343,7 @@ export default function Raw(props: Props) {
           logViewerFilterFields={(log) => filteredFields(_.keys(log), organizeFields)}
           logViewerRenderCustomTagsArea={renderBuiltinFields}
           customLogFieldRender={renderLogViewerFieldValueWithoutFilters}
+          logCollapsedByDefault
           renderHistogramAddonAfterRender={(toggleNode) => {
             if (data) {
               return (
@@ -364,6 +369,30 @@ export default function Raw(props: Props) {
                   <span>{t(`${logExplorerNS}:logs.duration`)} :</span>
                   <span>{loadTimeRef.current} ms</span>
                 </Space>
+              )}
+              {pageLoadMode === 'pagination' && (
+                <Select
+                  size='small'
+                  value={serviceParams.pageSize}
+                  onChange={(pageSize) => {
+                    appendRef.current = false;
+                    fixedRangeRef.current = true;
+                    setServiceParams((prev) => ({
+                      ...prev,
+                      current: 1,
+                      pageSize,
+                    }));
+                  }}
+                  style={{ width: 90 }}
+                  options={[
+                    { label: '30 / page', value: 30 },
+                    { label: '50 / page', value: 50 },
+                    { label: '100 / page', value: 100 },
+                    { label: '200 / page', value: 200 },
+                    { label: '500 / page', value: 500 },
+                    { label: '1000 / page', value: 1000 },
+                  ]}
+                />
               )}
               {pageLoadMode === 'pagination' ? (
                 <Pagination

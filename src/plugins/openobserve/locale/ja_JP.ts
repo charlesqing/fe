@@ -4,6 +4,8 @@ const ja_JP = {
     query: 'クエリ',
     query_required: 'クエリを入力してください',
     query_lanaguage_docs: 'クエリ言語ドキュメント',
+    organization: '組織',
+    stream: 'ストリーム',
     limit: '制限エントリ',
     hits: 'ヒット数',
     graph_settings: {
@@ -98,6 +100,18 @@ const ja_JP = {
   alert: {
     query_warning_no_time:
       'クエリ条件で _time（時間フィールド）を使用して時間範囲を明確に制限することを強く推奨します。そうしない場合、<b>ストレージ負荷の異常やアラートクエリのタイムアウト</b>などの問題が発生する可能性があります',
+    eval_window: '評価ウィンドウ',
+    eval_window_help: 'ログアラートはこの時間範囲で一致件数を集計します（例：直近5分）。デフォルトは60秒です。',
+    mode: 'クエリモード',
+    mode_sql: 'SQL モード',
+    mode_simple: '簡易モード',
+    mode_sql_help:
+      '完全な SQL（SELECT / GROUP BY / 集計関数をサポート）を記述します。結果セットの各行は独立したアラート系列となり、次元ごとに発報できます。時間窓は「評価ウィンドウ」で自動注入されるため手書き不要です。',
+    mode_simple_help:
+      'WHERE 句のみを記述します。システムが自動で SELECT count(*) に包み、一致件数を集計します。トリガーは count > N で設定してください。',
+    query_placeholder_sql:
+      'SELECT count(*) AS value, kubernetes_pod_name FROM "<stream>" WHERE log LIKE \'%ERROR%\' GROUP BY kubernetes_pod_name',
+    query_placeholder_simple: "kubernetes_namespace_name = 'ziox' AND log LIKE '%ERROR%'",
   },
 };
 export default ja_JP;

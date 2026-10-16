@@ -79,7 +79,7 @@ function getSuggestionBaseQuery(filters?: OpenObserveFilter[], index?: number) {
   return renderLogsQL({ filters: typeof index === 'number' ? _.slice(filters || [], 0, index) : filters || [] });
 }
 
-function useFieldNameSuggestions(params: { datasourceValue?: number; range?: any; query: string; keyword: string; enabled?: boolean }) {
+function useFieldNameSuggestions(params: { datasourceValue?: number; range?: any; query: string; keyword: string; enabled?: boolean; org?: string; stream?: string }) {
   const range = React.useMemo(() => getRangeUnix(params.range), [JSON.stringify(params.range)]);
   return useRequest(
     () => {
@@ -91,17 +91,19 @@ function useFieldNameSuggestions(params: { datasourceValue?: number; range?: any
         end: range!.end,
         filter: params.keyword,
         limit: 100,
+        org: params.org,
+        stream: params.stream,
       });
     },
     {
-      refreshDeps: [params.datasourceValue, range?.start, range?.end, params.query, params.keyword],
+      refreshDeps: [params.datasourceValue, range?.start, range?.end, params.query, params.keyword, params.org, params.stream],
       ready: !!params.enabled && !!params.datasourceValue && !!range?.start && !!range?.end,
       debounceWait: SUGGESTION_DEBOUNCE_WAIT,
     },
   );
 }
 
-function useAggregationFieldSuggestions(params: { datasourceValue?: number; range?: any; query: string; enabled?: boolean }) {
+function useAggregationFieldSuggestions(params: { datasourceValue?: number; range?: any; query: string; enabled?: boolean; org?: string; stream?: string }) {
   const range = React.useMemo(() => getRangeUnix(params.range), [JSON.stringify(params.range)]);
   return useRequest(
     () => {
@@ -113,10 +115,12 @@ function useAggregationFieldSuggestions(params: { datasourceValue?: number; rang
         end: range!.end,
         filter: '',
         limit: 100,
+        org: params.org,
+        stream: params.stream,
       });
     },
     {
-      refreshDeps: [params.datasourceValue, params.query, !!range?.start, !!range?.end],
+      refreshDeps: [params.datasourceValue, params.query, !!range?.start, !!range?.end, params.org, params.stream],
       ready: !!params.enabled && !!params.datasourceValue && !!range?.start && !!range?.end,
       debounceWait: SUGGESTION_DEBOUNCE_WAIT,
     },
@@ -130,13 +134,15 @@ function FieldSelect(props: {
   range?: any;
   query: string;
   disabled?: boolean;
+  org?: string;
+  stream?: string;
   fieldsFilter?: (fields: FieldNameSuggestion[]) => FieldNameSuggestion[];
   onFieldChange?: (field?: FieldNameSuggestion) => void;
 }) {
-  const { value, onChange, datasourceValue, range, query, disabled, fieldsFilter, onFieldChange } = props;
+  const { value, onChange, datasourceValue, range, query, disabled, org, stream, fieldsFilter, onFieldChange } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   const [keyword, setKeyword] = useState('');
-  const { data, loading } = useFieldNameSuggestions({ datasourceValue, range, query, keyword, enabled: !disabled });
+  const { data, loading } = useFieldNameSuggestions({ datasourceValue, range, query, keyword, enabled: !disabled, org, stream });
   const fields = fieldsFilter ? fieldsFilter(data || []) : data || [];
   const options = React.useMemo(() => {
     const manualField = _.trim(keyword || value);
@@ -221,8 +227,8 @@ function FieldTagsSelect(props: { value?: string[]; onChange?: (value?: string[]
   );
 }
 
-function FieldValueSelect(props: { value?: any; onChange?: (value?: any) => void; datasourceValue?: number; range?: any; query: string; field?: string }) {
-  const { value, onChange, datasourceValue, range, query, field } = props;
+function FieldValueSelect(props: { value?: any; onChange?: (value?: any) => void; datasourceValue?: number; range?: any; query: string; field?: string; org?: string; stream?: string }) {
+  const { value, onChange, datasourceValue, range, query, field, org, stream } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   const [keyword, setKeyword] = useState('');
   const rangeUnix = React.useMemo(() => getRangeUnix(range), [JSON.stringify(range)]);
@@ -237,6 +243,8 @@ function FieldValueSelect(props: { value?: any; onChange?: (value?: any) => void
         field: field!,
         filter: keyword,
         limit: 100,
+        org,
+        stream,
       });
     },
     {
@@ -313,11 +321,13 @@ function FilterPopover(props: {
   index?: number;
   datasourceValue?: number;
   range?: any;
+  org?: string;
+  stream?: string;
   onChange?: (data: OpenObserveFilter) => void;
   onAdd?: (data: OpenObserveFilter) => void;
   ignoreNextOutsideClick: () => void;
 }) {
-  const { children, data, filters, index, datasourceValue, range, onChange, onAdd, ignoreNextOutsideClick } = props;
+  const { children, data, filters, index, datasourceValue, range, org, stream, onChange, onAdd, ignoreNextOutsideClick } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   const [visible, setVisible] = useState<boolean>();
   const [form] = Form.useForm();
@@ -369,6 +379,8 @@ function FilterPopover(props: {
                     datasourceValue={datasourceValue}
                     range={range}
                     query={suggestionQuery}
+                    org={org}
+                    stream={stream}
                     onFieldChange={() => {
                       form.setFieldsValue({
                         op: _.head(getOperatorsByFieldType()) || 'eq',
@@ -386,7 +398,7 @@ function FilterPopover(props: {
               {op !== 'exists' && op !== 'not_exists' && (
                 <Col span={24}>
                   <Form.Item label={t('builder.value')} name='value' rules={[{ required: true, message: t('builder.input_value') }]}>
-                    <FieldValueSelect datasourceValue={datasourceValue} range={range} query={suggestionQuery} field={field} />
+                    <FieldValueSelect datasourceValue={datasourceValue} range={range} query={suggestionQuery} field={field} org={org} stream={stream} />
                   </Form.Item>
                 </Col>
               )}
@@ -406,8 +418,10 @@ function Filters(props: {
   ignoreNextOutsideClick: () => void;
   datasourceValue?: number;
   range?: any;
+  org?: string;
+  stream?: string;
 }) {
-  const { value, onChange, ignoreNextOutsideClick, datasourceValue, range } = props;
+  const { value, onChange, ignoreNextOutsideClick, datasourceValue, range, org, stream } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   return (
     <Space size={[SIZE, SIZE / 2]} wrap style={{ maxWidth: 'calc(100% - 200px)' }}>
@@ -421,6 +435,8 @@ function Filters(props: {
             index={index}
             datasourceValue={datasourceValue}
             range={range}
+            org={org}
+            stream={stream}
             ignoreNextOutsideClick={ignoreNextOutsideClick}
             onChange={(values) => {
               onChange?.(_.map(value, (v, i) => (i === index ? values : v)));
@@ -449,6 +465,8 @@ function Filters(props: {
         index={(value || []).length}
         datasourceValue={datasourceValue}
         range={range}
+        org={org}
+        stream={stream}
         ignoreNextOutsideClick={ignoreNextOutsideClick}
         onAdd={(values) => onChange?.([...(value || []), values])}
       >
@@ -742,6 +760,8 @@ export default function Builder(props: Props) {
     range: queryValues?.range,
     query: filterOnlyQuery,
     enabled: visible && mode === 'metric' && Array.isArray(filters),
+    org: queryValues?.org,
+    stream: queryValues?.stream,
   });
 
   const ignoreNextOutsideClick = () => {
@@ -788,7 +808,7 @@ export default function Builder(props: Props) {
     if (mode === 'metric') {
       const metric = values as OpenObserveMetricBuilderState;
       return {
-        query: renderMetricLogsQL(metric, { multiline: true }),
+        query: renderMetricLogsQL(metric, { multiline: true }, values.query?.stream),
         values: {
           metric,
           raw: { filters: values.filters || [] },
@@ -816,7 +836,7 @@ export default function Builder(props: Props) {
   return (
     <div
       ref={eleRef}
-      className={classNames('w-full border border-antd rounded-lg mb-2 mt-1 bg-fc-100 left-0 p-4 pt-2 shadow-lg', {
+      className={classNames('w-full border border-antd rounded bg-fc-100 left-0 px-3 py-2 shadow-sm', {
         absolute: !queryBuilderPinned,
         'top-[32px]': !queryBuilderPinned,
         'border-primary': !queryBuilderPinned,
@@ -828,7 +848,7 @@ export default function Builder(props: Props) {
       }}
     >
       <Form form={form} layout='vertical'>
-        <div className='w-full table border-separate border-spacing-y-3'>
+        <div className='w-full table border-separate border-spacing-y-2'>
           <div className='table-column w-[52px]' />
           <div className='table-column' />
           <div className='table-row'>
@@ -844,7 +864,7 @@ export default function Builder(props: Props) {
             </div>
             <div className='table-cell'>
               <Form.Item name='filters' noStyle>
-                <Filters datasourceValue={datasourceValue} range={queryValues?.range} ignoreNextOutsideClick={ignoreNextOutsideClick} />
+                <Filters datasourceValue={datasourceValue} range={queryValues?.range} org={queryValues?.org} stream={queryValues?.stream} ignoreNextOutsideClick={ignoreNextOutsideClick} />
               </Form.Item>
             </div>
           </div>
@@ -900,7 +920,7 @@ export default function Builder(props: Props) {
           </div>
         </div>
         {validationMessage && <Alert className='mt-3' showIcon type='warning' message={validationMessage} />}
-        <Space size={SIZE} className='mt-3'>
+        <Space size={SIZE} className='mt-2'>
           <Button
             size='small'
             type='primary'

@@ -1,8 +1,8 @@
 import _ from 'lodash';
 
 export const BUILTIN_FIELDS = ['__n9e_id_n9e__', '__n9e_raw_n9e__', '___id___', '___raw___', '__id__', '__raw__'];
-export const VICTORIALOGS_BUILTIN_FIELDS = ['_msg', '_time', '_stream_id', '_stream'];
-export const BUILDER_SUGGESTION_BLOCKED_FIELDS = new Set(['_time', '_msg', '_stream', '_stream_id']);
+export const VICTORIALOGS_BUILTIN_FIELDS = ['_msg', '_timestamp', '_stream_id', '_stream'];
+export const BUILDER_SUGGESTION_BLOCKED_FIELDS = new Set(['_timestamp', '_msg', '_stream', '_stream_id']);
 
 export function isBuilderSuggestionBlockedField(field?: string) {
   if (!field) return false;

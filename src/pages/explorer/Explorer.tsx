@@ -35,7 +35,7 @@ import { Explorer as IotDB } from '@/plugins/iotdb';
 import { Explorer as TDengine } from '@/plugins/TDengine';
 import { Explorer as CK } from '@/plugins/clickHouse';
 import { Explorer as Victorialogs } from '@/plugins/victorialogs';
-import { Explorer as OpenObserve } from '@/plugins/openobserve';
+import ExplorerNG from '@/plugins/openobserve/ExplorerNG';
 import { allCates } from '@/components/AdvancedWrap/utils';
 import ViewSelect, { ModalState } from '@/components/ViewSelect';
 
@@ -392,7 +392,17 @@ const Panel = (props: IProps) => {
                 } else if (datasourceCate === DatasourceCateEnum.victorialogs) {
                   return <Victorialogs datasourceValue={datasourceValue} headerExtra={headerExtraRef.current} defaultFormValuesControl={defaultFormValuesControl} />;
                 } else if (datasourceCate === DatasourceCateEnum.openobserve) {
-                  return <OpenObserve datasourceValue={datasourceValue} headerExtra={headerExtraRef.current} defaultFormValuesControl={defaultFormValuesControl} />;
+                  // OpenObserve 仅支持标准 SQL，旧 Explorer（LogSQL 代理通道）对其不可用，统一复用 ExplorerNG。
+                  return (
+                    <Form
+                      initialValues={{
+                        datasourceValue,
+                        datasourceCate: DatasourceCateEnum.openobserve,
+                      }}
+                    >
+                      <ExplorerNG tabKey={props.tabKey} defaultFormValuesControl={defaultFormValuesControl} renderCommonSettings={() => null} />
+                    </Form>
+                  );
                 }
                 return (
                   <PlusExplorer

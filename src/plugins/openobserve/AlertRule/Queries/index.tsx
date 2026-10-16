@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
-import { Form, Space, Row, Col, Input, Alert, Button, Tooltip } from 'antd';
+import { Form, Space, Row, Col, Input, Button, Tooltip, Select, Segmented } from 'antd';
 import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import CardContainer, { CardContainerHeader } from '@/pages/alertRules/FormNG/components/CardContainer';
 import FormItemLabel from '@/pages/alertRules/FormNG/components/FormItemLabel';
 import _ from 'lodash';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 import { CommonStateContext } from '@/App';
 import InputGroupWithFormItem from '@/components/InputGroupWithFormItem';
@@ -27,6 +27,7 @@ export default function index({ prefixField = {}, fullPrefixName = [], prefixNam
   const { darkMode } = useContext(CommonStateContext);
   const datasourceID = _.isArray(datasourceValue) ? datasourceValue[0] : datasourceValue;
   const queries = Form.useWatch(['rule_config', 'queries']);
+  const form = Form.useFormInstance();
 
   return (
     <>
@@ -37,6 +38,8 @@ export default function index({ prefixField = {}, fullPrefixName = [], prefixNam
           {
             ref: 'A',
             query: DEFAULT_QUERY,
+            mode: 'sql',
+            window: 60,
           },
         ]}
       >
@@ -46,51 +49,90 @@ export default function index({ prefixField = {}, fullPrefixName = [], prefixNam
             {fields.map((field) => {
               return (
                 <CardContainer key={field.key} onClose={fields.length > 1 ? () => remove(field.name) : undefined}>
-                  <Form.Item shouldUpdate noStyle>
-                    {({ getFieldValue }) => {
-                      const query = getFieldValue([...fullPrefixName, ...prefixName, 'queries', field.name]);
-                      const queryValue = query?.query;
-                      if (!queryValue || _.includes(queryValue, '_time')) return null;
-                      return <Alert className='mb-2' type='warning' message={<Trans ns={NAME_SPACE} i18nKey='alert.query_warning_no_time' components={{ b: <strong /> }} />} />;
-                    }}
-                  </Form.Item>
                   <CardContainerHeader>
-                    <Row gutter={8}>
-                      <Col flex='32px'>
-                        <Form.Item {...field} name={[field.name, 'ref']} initialValue={generateQueryName(_.map(queries, 'ref'))}>
-                          <QueryName existingNames={_.map(queries, 'ref')} />
-                        </Form.Item>
-                      </Col>
-                      <Col flex='auto'>
-                        <div className='tdengine-discover-query'>
-                          <InputGroupWithFormItem
-                            label={
-                              <Space>
-                                {t('explorer.query')}
-                                <Tooltip title={t('common:click_to_view_doc')}>
-                                  <QuestionCircleOutlined
-                                    onClick={() => {
-                                      DocumentDrawer({
-                                        language: i18n.language,
-                                        darkMode,
-                                        title: t('common:page_help'),
-                                        type: 'iframe',
-                                        documentPath:
-                                          'https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v9/usage/alert-notify/rules/alert-rules/query-data/openobserve/',
-                                      });
+                    <Form.Item shouldUpdate noStyle>
+                      {({ getFieldValue }) => {
+                        const queryObj = getFieldValue([...fullPrefixName, ...prefixName, 'queries', field.name]) || {};
+                        const isSql = queryObj.mode ? queryObj.mode === 'sql' : /^\s*select/i.test(queryObj.query || '');
+                        return (
+                          <Row gutter={8} align='top'>
+                            <Col flex='32px'>
+                              <Form.Item {...field} name={[field.name, 'ref']} initialValue={generateQueryName(_.map(queries, 'ref'))}>
+                                <QueryName existingNames={_.map(queries, 'ref')} />
+                              </Form.Item>
+                            </Col>
+                            <Col flex='auto'>
+                              <div className='tdengine-discover-query'>
+                                <Space className='mb-1' wrap>
+                                  <Segmented
+                                    size='small'
+                                    value={isSql ? 'sql' : 'simple'}
+                                    onChange={(val) => {
+                                      const path = [...fullPrefixName, ...prefixName, 'queries', field.name, 'mode'].join('.');
+                                      form.setFieldsValue({ [path]: val });
                                     }}
+                                    options={[
+                                      { label: t('alert.mode_sql'), value: 'sql' },
+                                      { label: t('alert.mode_simple'), value: 'simple' },
+                                    ]}
                                   />
-                                </Tooltip>
-                              </Space>
-                            }
-                          >
-                            <Form.Item {...field} name={[field.name, 'query']}>
-                              <Input.TextArea autoSize={{ minRows: 0 }} />
-                            </Form.Item>
-                          </InputGroupWithFormItem>
-                        </div>
-                      </Col>
-                    </Row>
+                                  <Tooltip title={isSql ? t('alert.mode_sql_help') : t('alert.mode_simple_help')}>
+                                    <QuestionCircleOutlined />
+                                  </Tooltip>
+                                </Space>
+                                <InputGroupWithFormItem
+                                  label={
+                                    <Space>
+                                      {t('explorer.query')}
+                                      <Tooltip title={t('common:click_to_view_doc')}>
+                                        <QuestionCircleOutlined
+                                          onClick={() => {
+                                            DocumentDrawer({
+                                              language: i18n.language,
+                                              darkMode,
+                                              title: t('common:page_help'),
+                                              type: 'iframe',
+                                              documentPath:
+                                                'https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v9/usage/alert-notify/rules/alert-rules/query-data/openobserve/',
+                                            });
+                                          }}
+                                        />
+                                      </Tooltip>
+                                    </Space>
+                                  }
+                                >
+                                  <Form.Item {...field} name={[field.name, 'query']}>
+                                    <Input.TextArea autoSize={{ minRows: 0 }} placeholder={isSql ? t('alert.query_placeholder_sql') : t('alert.query_placeholder_simple')} />
+                                  </Form.Item>
+                                </InputGroupWithFormItem>
+                                <div className='text-hint text-xs mt-1'>{isSql ? t('alert.mode_sql_help') : t('alert.mode_simple_help')}</div>
+                              </div>
+                            </Col>
+                            <Col>
+                              <Form.Item
+                                label={t('alert.eval_window')}
+                                tooltip={t('alert.eval_window_help')}
+                                name={[field.name, 'window']}
+                                initialValue={60}
+                              >
+                                <Select
+                                  style={{ width: 130 }}
+                                  placeholder='1 分钟 (默认 60s)'
+                                  options={[
+                                    { label: '1 分钟', value: 60 },
+                                    { label: '5 分钟', value: 300 },
+                                    { label: '10 分钟', value: 600 },
+                                    { label: '15 分钟', value: 900 },
+                                    { label: '30 分钟', value: 1800 },
+                                    { label: '1 小时', value: 3600 },
+                                  ]}
+                                />
+                              </Form.Item>
+                            </Col>
+                          </Row>
+                        );
+                      }}
+                    </Form.Item>
                   </CardContainerHeader>
                   <Form.Item shouldUpdate noStyle>
                     {({ getFieldValue }) => {
@@ -108,8 +150,10 @@ export default function index({ prefixField = {}, fullPrefixName = [], prefixNam
               onClick={() => {
                 add({
                   query: DEFAULT_QUERY,
+                  mode: 'sql',
                   interval: 1,
                   interval_unit: 'min',
+                  window: 60,
                 });
               }}
               icon={<PlusOutlined />}

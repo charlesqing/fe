@@ -14,6 +14,7 @@ import { Field } from '../types';
 import Builder from '../Builder';
 import { inferMetricTimeseriesKeys } from '../utils/logsQL';
 import MainMoreOperations from '../components/MainMoreOperations';
+import OrgStreamSelector from '../components/OrgStreamSelector';
 import Metric from './Metric';
 import QueryInput, { QueryInputHandle } from './QueryInput';
 import Raw from './Raw';
@@ -61,6 +62,7 @@ export default function Main(props: Props) {
   return (
     <div className='flex flex-col flex-1 h-full min-h-0'>
       <div className='flex-shrink-0 relative z-10'>
+        <OrgStreamSelector />
         <Row gutter={SIZE} wrap={false}>
           <Col flex='none'>
             <Segmented

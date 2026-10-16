@@ -4,6 +4,8 @@ const ru_RU = {
     query: 'Условия запроса',
     query_required: 'Условия запроса не могут быть пустыми',
     query_lanaguage_docs: 'Документация по языку запросов',
+    organization: 'Организация',
+    stream: 'Поток данных',
     limit: 'Лимит',
     hits: 'Совпадения',
     graph_settings: {
@@ -98,6 +100,18 @@ const ru_RU = {
   alert: {
     query_warning_no_time:
       'Настоятельно рекомендуется использовать _time (поле времени) в условиях запроса для явного ограничения временного диапазона, в противном случае это может привести к таким проблемам, как: <b>аномальная нагрузка на хранилище, тайм-аут запроса оповещения</b>',
+    eval_window: 'Окно оценки',
+    eval_window_help: 'Журнальные оповещения подсчитывают совпадения за этот временной диапазон (например, последние 5 минут). По умолчанию 60с.',
+    mode: 'Режим запроса',
+    mode_sql: 'Режим SQL',
+    mode_simple: 'Простой режим',
+    mode_sql_help:
+      'Пишите полный SQL (поддерживаются SELECT / GROUP BY / агрегатные функции). Каждая строка результата становится независимой серией оповещения и может срабатывать по измерению; временное окно автоматически подставляется «окном оценки», писать вручную не нужно.',
+    mode_simple_help:
+      'Пишите только фрагмент WHERE; система оборачивает его в SELECT count(*) для подсчёта совпадений. Настройте триггер как count > N.',
+    query_placeholder_sql:
+      'SELECT count(*) AS value, kubernetes_pod_name FROM "<stream>" WHERE log LIKE \'%ERROR%\' GROUP BY kubernetes_pod_name',
+    query_placeholder_simple: "kubernetes_namespace_name = 'ziox' AND log LIKE '%ERROR%'",
   },
 };
 export default ru_RU;

@@ -18,6 +18,8 @@ export function logsQuery(data: {
     offset?: number;
     ref: string;
     reverse?: boolean;
+    org?: string;
+    stream?: string;
   }[];
 }): Promise<{
   list: Record<string, any>[];
@@ -46,6 +48,8 @@ export function getFieldNames(data: {
   end: number;
   filter?: string;
   limit?: number;
+  org?: string;
+  stream?: string;
 }): Promise<FieldNameSuggestion[]> {
   return request('/api/n9e/openobserve-label-names', {
     method: RequestMethod.Post,
@@ -66,6 +70,8 @@ export function getFieldValues(data: {
   field: string;
   filter?: string;
   limit?: number;
+  org?: string;
+  stream?: string;
 }): Promise<FieldValueSuggestion[]> {
   return request('/api/n9e/openobserve-label-values', {
     method: RequestMethod.Post,
@@ -86,9 +92,34 @@ export function getHistogram(data: {
     end: number;
     step?: string;
     group_by?: string;
+    org?: string;
+    stream?: string;
   }[];
 }): Promise<HistogramValue[]> {
   return request('/api/n9e/openobserve-histogram', {
+    method: RequestMethod.Post,
+    data,
+    silence: true,
+  }).then((res) => res.dat || []);
+}
+
+export function getOrgs(data: {
+  cate: DatasourceCateEnum;
+  datasource_id: number;
+}): Promise<string[]> {
+  return request('/api/n9e/openobserve-orgs', {
+    method: RequestMethod.Post,
+    data,
+    silence: true,
+  }).then((res) => res.dat || []);
+}
+
+export function getStreams(data: {
+  cate: DatasourceCateEnum;
+  datasource_id: number;
+  org: string;
+}): Promise<string[]> {
+  return request('/api/n9e/openobserve-streams', {
     method: RequestMethod.Post,
     data,
     silence: true,

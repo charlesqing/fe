@@ -10,4 +10,4 @@ export const BUILDER_PINNED_CACHE_KEY = `ng-${NAME_SPACE}-explorerng-builder-pin
 export const STREAM_FIELDS_LOOKBACK_HOURS = 24;
 export const RAW_DEFAULT_QUERY = '*';
 export const METRIC_DEFAULT_QUERY = '';
-export const DEFAULT_TIME_FIELD = '_time';
+export const DEFAULT_TIME_FIELD = '_timestamp';

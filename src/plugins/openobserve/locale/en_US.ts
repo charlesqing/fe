@@ -4,6 +4,8 @@ const en_US = {
     query: 'Query',
     query_required: 'Please enter a valid Query and execute it',
     query_lanaguage_docs: 'Query language docs',
+    organization: 'Organization',
+    stream: 'Stream',
     limit: 'Limit entries',
     hits: 'Total hits',
     graph_settings: {
@@ -98,6 +100,18 @@ const en_US = {
   alert: {
     query_warning_no_time:
       'It is strongly recommended to use _time (time field) in the query conditions to explicitly limit the time range, otherwise it may lead to issues such as: <b>abnormal storage load, alert query timeout</b>',
+    eval_window: 'Evaluation window',
+    eval_window_help: 'Count matching logs over this time range (e.g. last 5 minutes). Default 60s.',
+    mode: 'Query mode',
+    mode_sql: 'SQL mode',
+    mode_simple: 'Simple mode',
+    mode_sql_help:
+      'Write full SQL (supports SELECT / GROUP BY / aggregate functions). Each row of the result set becomes an independent alert series and can fire per dimension; the time window is auto-injected by the "Evaluation window", no need to write it manually.',
+    mode_simple_help:
+      "Write only a WHERE fragment; the system wraps it into SELECT count(*) to count matches. Configure the trigger as count > N.",
+    query_placeholder_sql:
+      "SELECT count(*) AS value, kubernetes_pod_name FROM \"<stream>\" WHERE log LIKE '%ERROR%' GROUP BY kubernetes_pod_name",
+    query_placeholder_simple: "kubernetes_namespace_name = 'ziox' AND log LIKE '%ERROR%'",
   },
 };
 export default en_US;

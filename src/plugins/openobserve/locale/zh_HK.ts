@@ -4,6 +4,8 @@ const zh_HK = {
     query: '查詢條件',
     query_required: '查詢條件不能為空',
     query_lanaguage_docs: '查詢語言文檔',
+    organization: '組織',
+    stream: '數據流',
     limit: '限制數量',
     hits: '匹配結果',
     graph_settings: {
@@ -97,6 +99,18 @@ const zh_HK = {
   datasource: {},
   alert: {
     query_warning_no_time: '強烈建議在查詢條件中使用 _time (時間字段) 明確限制時間範圍，否則可能導致：<b>存儲負載異常，告警查詢超時</b>等問題',
+    eval_window: '評估窗口',
+    eval_window_help: '日誌告警按此時間範圍統計匹配條數（如最近 5 分鐘），預設 60 秒',
+    mode: '查詢模式',
+    mode_sql: 'SQL 模式',
+    mode_simple: '簡單模式',
+    mode_sql_help:
+      '寫完整 SQL（支援 SELECT / GROUP BY / 聚合函數）。結果集每一行會作為一條獨立告警序列，可按維度分別觸發；時間窗由「評估窗口」自動注入，無需手寫。',
+    mode_simple_help:
+      '只寫 WHERE 條件片段，系統自動包成 SELECT count(*) 統計命中條數，觸發器配 count > N 即可。',
+    query_placeholder_sql:
+      'SELECT count(*) AS value, kubernetes_pod_name FROM "<stream>" WHERE log LIKE \'%ERROR%\' GROUP BY kubernetes_pod_name',
+    query_placeholder_simple: "kubernetes_namespace_name = 'ziox' AND log LIKE '%ERROR%'",
   },
 };
 export default zh_HK;

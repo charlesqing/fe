@@ -54,6 +54,8 @@ export interface OpenObserveQuery {
   mode?: ExplorerMode;
   query?: string;
   range?: any;
+  org?: string;
+  stream?: string;
   builder?: OpenObserveBuilderState;
   builderStatus?: BuilderStatus;
   querySource?: QuerySource;

@@ -3,11 +3,12 @@ import _ from 'lodash';
 import moment from 'moment';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { Table, Tooltip, Empty, Space } from 'antd';
+import { Table, Tooltip, Empty, Space, Button } from 'antd';
 import { CaretDownOutlined, CaretRightOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useClickAway } from 'ahooks';
 
 import NavigableDrawer from '@/components/NavigableDrawer';
+import { useAiChatContext } from '@/components/AiChatNG';
 
 import { NAME_SPACE } from '../../constants';
 import { OnValueFilterParams, FieldValueType } from './types';
@@ -65,6 +66,8 @@ interface Props {
     },
   ) => React.ReactNode | false;
   hideTypeIcon?: boolean;
+  /** 单条日志默认折叠（仿 OpenObserve UI 折叠行），仅 openobserve 数据源开启 */
+  logCollapsedByDefault?: boolean;
 }
 
 interface RenderValueProps {
@@ -265,6 +268,7 @@ export const DataContext = React.createContext<{
 
 function Raw(props: Props) {
   const { t } = useTranslation(NAME_SPACE);
+  const { openAiChat } = useAiChatContext();
   const {
     timeField,
     data,
@@ -287,83 +291,152 @@ function Raw(props: Props) {
     showExistsAction,
     customLogFieldRender,
     hideTypeIcon,
+    logCollapsedByDefault = false,
   } = props;
   const [logViewerDrawerState, setLogViewerDrawerState] = useState<{ visible: boolean; currentIndex: number }>({ visible: false, currentIndex: -1 });
+  // 单条日志默认折叠（仿 OpenObserve UI）：新一批日志到达时按 logCollapsedByDefault 重置展开状态
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (logCollapsedByDefault) {
+      setExpandedIds(new Set());
+    } else {
+      setExpandedIds(new Set((data || []).map((d) => d[id_key]).filter(Boolean)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logsHash]);
+
+  const toggleExpanded = React.useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  // 展开态：渲染该条日志的全部字段（与原逻辑一致）
+  const renderFullContent = (item: any, index: number, highlight: any) => {
+    const fields = filterFields ? filterFields(_.keys(item)) : _.keys(item);
+    return (
+      <div className='w-full'>
+        {_.map(fields, (key) => {
+          const val = item[key];
+          const valToObj = val;
+          const subJSON = _.isArray(valToObj) ? valToObj : [valToObj];
+
+          const result = customLogFieldRender
+            ? customLogFieldRender(key, val, {
+                rawValue: item,
+                highlight,
+                renderScene: 'raw',
+                onValueFilter,
+              })
+            : false;
+
+          if (result !== false) {
+            return result;
+          }
+
+          return (
+            <DataContext.Provider value={{ rawValue: item, highlight }} key={key}>
+              <div
+                className={classNames({
+                  [explorerOriginInlineCellClassName]: options.lineBreak !== 'true',
+                  [explorerOriginBreakCellClassName]: options.lineBreak === 'true',
+                })}
+              >
+                {_.isPlainObject(valToObj) || (_.isArray(valToObj) && options?.jsonDisplaType === 'tree') ? (
+                  <ul className={explorerOriginUlClassName}>
+                    {_.isEmpty(subJSON) ? (
+                      <>
+                        <div className={explorerOriginFieldKeyClassName}>{key}</div>: <div className={explorerOriginFieldValClassName}>{`[]`}</div>
+                      </>
+                    ) : (
+                      _.map(subJSON, (subItem, idx) => {
+                        return (
+                          <RenderSubJSON
+                            key={idx}
+                            parentKey={key}
+                            label={_.isArray(valToObj) ? `${key}[${idx}]` : key}
+                            subJSON={subItem}
+                            options={options}
+                            currentExpandLevel={1}
+                            onValueFilter={onValueFilter}
+                            adjustFieldValue={adjustFieldValue}
+                            showExistsAction={showExistsAction}
+                          />
+                        );
+                      })
+                    )}
+                  </ul>
+                ) : _.isArray(valToObj) ? (
+                  <>
+                    <div className={explorerOriginFieldKeyClassName}>{key}</div>:{' '}
+                    <RenderValue name={key} value={JSON.stringify(val)} onValueFilter={onValueFilter} adjustFieldValue={adjustFieldValue} showExistsAction={showExistsAction} />
+                  </>
+                ) : (
+                  <>
+                    <div className={explorerOriginFieldKeyClassName}>{key}</div>:{' '}
+                    <RenderValue name={key} value={val} onValueFilter={onValueFilter} adjustFieldValue={adjustFieldValue} showExistsAction={showExistsAction} />
+                  </>
+                )}
+              </div>
+            </DataContext.Provider>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // 折叠态：仅展示一行摘要（时间 + 代表字段/消息预览），与 OpenObserve 折叠行一致
+  const renderCollapsed = (item: any) => {
+    const time = timeField && item[timeField] != null ? moment(item[timeField]).format('YYYY-MM-DD HH:mm:ss.SSS') : '';
+    const msgKey = ['log', 'message', 'msg', 'body', 'content', '_raw', 'text'].find(
+      (k) => item[k] != null && typeof item[k] === 'string' && String(item[k]).trim() !== '',
+    );
+    let text = '';
+    if (msgKey) {
+      text = String(item[msgKey]);
+    } else {
+      const keys = (filterFields ? filterFields(_.keys(item)) : _.keys(item)).filter((k) => k !== timeField && k !== id_key && k !== raw_key);
+      text = keys
+        .slice(0, 6)
+        .map((k) => `${k}=${_.isObject(item[k]) ? JSON.stringify(item[k]) : item[k]}`)
+        .join('   ');
+    }
+    return (
+      <div className='flex items-baseline gap-2 text-[12px] leading-[20px] min-w-0'>
+        {options.time !== 'true' && time && <span className='text-hint whitespace-nowrap shrink-0'>{time}</span>}
+        <span className='text-main truncate' title={text}>
+          {text}
+        </span>
+      </div>
+    );
+  };
+
   const columns: any[] = [
     {
       title: t('logs.title'),
       render: (item, _record, index) => {
         const highlight = highlights?.[index] ?? {};
-        const fields = filterFields ? filterFields(_.keys(item)) : _.keys(item);
-
+        const id = item[id_key];
+        const expanded = expandedIds.has(id);
         return (
-          <div className='w-full'>
+          <div className='w-full flex items-start gap-1'>
             {rowPrefixRender && <>{rowPrefixRender(item)}</>}
-            {_.map(fields, (key) => {
-              const val = item[key];
-              const valToObj = val;
-              const subJSON = _.isArray(valToObj) ? valToObj : [valToObj];
-
-              const result = customLogFieldRender
-                ? customLogFieldRender(key, val, {
-                    rawValue: item,
-                    highlight,
-                    renderScene: 'raw',
-                    onValueFilter,
-                  })
-                : false;
-
-              if (result !== false) {
-                return result;
-              }
-
-              return (
-                <DataContext.Provider value={{ rawValue: item, highlight }} key={key}>
-                  <div
-                    className={classNames({
-                      [explorerOriginInlineCellClassName]: options.lineBreak !== 'true',
-                      [explorerOriginBreakCellClassName]: options.lineBreak === 'true',
-                    })}
-                  >
-                    {_.isPlainObject(valToObj) || (_.isArray(valToObj) && options?.jsonDisplaType === 'tree') ? (
-                      <ul className={explorerOriginUlClassName}>
-                        {_.isEmpty(subJSON) ? (
-                          <>
-                            <div className={explorerOriginFieldKeyClassName}>{key}</div>: <div className={explorerOriginFieldValClassName}>{`[]`}</div>
-                          </>
-                        ) : (
-                          _.map(subJSON, (item, idx) => {
-                            return (
-                              <RenderSubJSON
-                                key={idx}
-                                parentKey={key}
-                                label={_.isArray(valToObj) ? `${key}[${idx}]` : key}
-                                subJSON={item}
-                                options={options}
-                                currentExpandLevel={1}
-                                onValueFilter={onValueFilter}
-                                adjustFieldValue={adjustFieldValue}
-                                showExistsAction={showExistsAction}
-                              />
-                            );
-                          })
-                        )}
-                      </ul>
-                    ) : _.isArray(valToObj) ? (
-                      <>
-                        <div className={explorerOriginFieldKeyClassName}>{key}</div>:{' '}
-                        <RenderValue name={key} value={JSON.stringify(val)} onValueFilter={onValueFilter} adjustFieldValue={adjustFieldValue} showExistsAction={showExistsAction} />
-                      </>
-                    ) : (
-                      <>
-                        <div className={explorerOriginFieldKeyClassName}>{key}</div>:{' '}
-                        <RenderValue name={key} value={val} onValueFilter={onValueFilter} adjustFieldValue={adjustFieldValue} showExistsAction={showExistsAction} />
-                      </>
-                    )}
-                  </div>
-                </DataContext.Provider>
-              );
-            })}
+            <span
+              className='cursor-pointer select-none n9e-raw-log-toggle mt-[3px] shrink-0'
+              onClick={() => {
+                toggleExpanded(id);
+              }}
+            >
+              {expanded ? <CaretDownOutlined className='text-link' /> : <CaretRightOutlined className='text-link' />}
+            </span>
+            <div className='flex-1 min-w-0'>{expanded ? renderFullContent(item, index, highlight) : renderCollapsed(item)}</div>
           </div>
         );
       },
@@ -448,6 +521,52 @@ function Raw(props: Props) {
     ['click'],
   );
 
+  const currentLogIndex = logViewerDrawerState.currentIndex;
+  const hasPrevLog = currentLogIndex > 0;
+  const hasNextLog = currentLogIndex !== -1 && currentLogIndex < data.length - 1;
+
+  const handleAiAnalyze = () => {
+    const logItem = data[currentLogIndex];
+    if (!logItem) return;
+    const content = JSON.stringify(logItem, null, 2);
+    openAiChat({
+      initialMessage: t('ai_analyze_prompt', { content }),
+    });
+  };
+
+  const drawerExtra = (
+    <span className='flex items-center gap-1'>
+      <Button
+        size='small'
+        icon={<LeftOutlined />}
+        disabled={!hasPrevLog}
+        onClick={() => {
+          setLogViewerDrawerState({ visible: true, currentIndex: currentLogIndex - 1 });
+        }}
+      >
+        {t('prev')}
+      </Button>
+      <Button
+        size='small'
+        icon={<RightOutlined />}
+        disabled={!hasNextLog}
+        onClick={() => {
+          setLogViewerDrawerState({ visible: true, currentIndex: currentLogIndex + 1 });
+        }}
+      >
+        {t('next')}
+      </Button>
+      <Button
+        size='small'
+        icon={<img src='/image/ai-chat/ai.gif' style={{ width: 14, height: 14, marginRight: 4 }} alt='AI' />}
+        onClick={handleAiAnalyze}
+      >
+        {t('ai_analyze')}
+      </Button>
+      {logViewerExtraRender && logViewerExtraRender(data[currentLogIndex])}
+    </span>
+  );
+
   return (
     <div className='min-h-0 h-full' ref={drawerRef}>
       <Table
@@ -489,7 +608,7 @@ function Raw(props: Props) {
       <NavigableDrawer
         className='log-explorer-ignore-click-away'
         title={navigableDrawerTitle}
-        extra={logViewerExtraRender && logViewerExtraRender(data[logViewerDrawerState.currentIndex])}
+        extra={drawerExtra}
         placement='right'
         onClose={() => {
           setLogViewerDrawerState({ visible: false, currentIndex: -1 });
