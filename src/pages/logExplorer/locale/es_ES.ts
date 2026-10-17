@@ -26,6 +26,7 @@ const es_ES = {
   "share_tip": "Pulsa para copiar el enlace para compartir",
   "log_viewer_drawer_trigger_tip": "Pulsa para ver los detalles del log",
   "log_viewer_drawer_title": "Detalles del log",
+  "wrap_line": "Ajuste de línea",
   "copy_to_clipboard": "Copiar al portapapeles",
   "unindexable": "Las estadísticas no están activadas para este campo, así que no puede analizarse",
   "topn_no_data": "Sin datos",

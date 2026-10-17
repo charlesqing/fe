@@ -6,7 +6,7 @@
 import React, { useState, useMemo, useContext } from 'react';
 import _ from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { Space, Table, Tabs, Tooltip } from 'antd';
+import { Space, Switch, Table, Tabs, Tooltip } from 'antd';
 import { CopyOutlined, QuestionOutlined } from '@ant-design/icons';
 import moment from 'moment';
 
@@ -61,7 +61,10 @@ export default function LogView(props: Props) {
     customLogFieldRender,
     hideTypeIcon = false,
   } = props;
-  const [type, setType] = useState<string>('table');
+  // 默认展示 JSON（与 OpenObserve 原版详情页一致：JSON 在前、表格在后）
+  const [type, setType] = useState<string>('json');
+  // 表格视图的「换行」开关，默认开启（长值换行展示，不隐藏内容）
+  const [wrap, setWrap] = useState(true);
   const parsedRange = range ? parseRange(range) : null;
   let start = parsedRange ? moment(parsedRange.start).unix() : 0;
   let end = parsedRange ? moment(parsedRange.end).unix() : 0;
@@ -127,17 +130,30 @@ export default function LogView(props: Props) {
         }}
         size='small'
         tabBarExtraContent={
-          <Space
-            onClick={() => {
-              copyToClipBoard(jsonValue);
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            <CopyOutlined />
-            {t('copy_to_clipboard')}
+          <Space size={16}>
+            {type === 'table' && (
+              <Space size={4}>
+                <Switch size='small' checked={wrap} onChange={setWrap} />
+                <span className='text-hint'>{t('wrap_line')}</span>
+              </Space>
+            )}
+            <Space
+              onClick={() => {
+                copyToClipBoard(jsonValue);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <CopyOutlined />
+              {t('copy_to_clipboard')}
+            </Space>
           </Space>
         }
       >
+        <Tabs.TabPane tab='JSON' key='json'>
+          <div className='h-full overflow-auto'>
+            <HighLightJSON value={value?.[raw_key]} query={{ start, end }} urlTemplates={fieldConfig?.linkArr} extractArr={fieldConfig?.regExtractArr} />
+          </div>
+        </Tabs.TabPane>
         <Tabs.TabPane tab='Table' key='table'>
           <div className='h-full overflow-auto'>
             <Table
@@ -201,7 +217,7 @@ export default function LogView(props: Props) {
                         onTokenClick={onValueFilter}
                         rawValue={rawValue}
                         highlight={highlight}
-                        fieldValueClassName='whitespace-pre-wrap'
+                        fieldValueClassName={wrap ? 'whitespace-pre-wrap' : 'whitespace-nowrap'}
                       />
                     );
                   },
@@ -210,11 +226,6 @@ export default function LogView(props: Props) {
               size='small'
               pagination={false}
             />
-          </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab='JSON' key='json'>
-          <div className='h-full overflow-auto'>
-            <HighLightJSON value={value?.[raw_key]} query={{ start, end }} urlTemplates={fieldConfig?.linkArr} extractArr={fieldConfig?.regExtractArr} />
           </div>
         </Tabs.TabPane>
       </Tabs>

@@ -31,6 +31,7 @@ const ja_JP = {
   next: '次へ',
   ai_analyze: 'AI 分析',
   ai_analyze_prompt: '以下のログ内容を分析し、考えられる問題、原因、および対処法を指摘してください：\n\n{{content}}',
+  wrap_line: '折り返し',
   copy_to_clipboard: 'クリップボードにコピー',
   topn_no_data: 'データなし',
   unindexable: 'フィールド統計が有効になっていないため、統計分析を実行できません',

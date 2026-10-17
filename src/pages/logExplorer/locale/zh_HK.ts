@@ -30,6 +30,7 @@ const zh_HK = {
   next: '下一條',
   ai_analyze: 'AI 分析',
   ai_analyze_prompt: '請分析以下日誌內容，指出可能的問題、原因以及處理建議：\n\n{{content}}',
+  wrap_line: '換行',
   copy_to_clipboard: '複製到剪貼板',
   unindexable: '字段未開啟統計，無法進行統計分析',
   topn_no_data: '無數據',

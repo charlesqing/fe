@@ -26,6 +26,7 @@ const id_ID = {
   "share_tip": "Klik untuk menyalin tautan berbagi",
   "log_viewer_drawer_trigger_tip": "Klik untuk melihat detail log",
   "log_viewer_drawer_title": "Detail log",
+  "wrap_line": "Bungkus baris",
   "copy_to_clipboard": "Salin ke papan klip",
   "unindexable": "Statistik tidak aktif pada field ini, sehingga analisis statistik tidak bisa dilakukan",
   "topn_no_data": "Tidak ada data",

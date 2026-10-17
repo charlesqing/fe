@@ -15,6 +15,7 @@ import getColumnsFromFields from './utils/getColumnsFromFields';
 import getFieldsFromTableData from './utils/getFieldsFromTableData';
 import RDGTable from './components/Table';
 import LogViewer from './components/LogViewer';
+import LogDetailActions from './components/LogDetailActions';
 import { OptionsType, OnValueFilterParams } from './types';
 
 export function useDeepCompareWithRef(value) {
@@ -227,8 +228,24 @@ function Table(props: Props) {
       <NavigableDrawer
         className='log-explorer-ignore-click-away'
         title={navigableDrawerTitle}
-        extra={logViewerExtraRender && logViewerExtraRender(data[logViewerDrawerState.currentIndex])}
+        extra={
+          <LogDetailActions
+            log={data[logViewerDrawerState.currentIndex]}
+            timeField={timeField}
+            hasPrev={logViewerDrawerState.currentIndex > 0}
+            hasNext={logViewerDrawerState.currentIndex !== -1 && logViewerDrawerState.currentIndex < data.length - 1}
+            onPrev={() => {
+              setLogViewerDrawerState({ visible: true, currentIndex: logViewerDrawerState.currentIndex - 1 });
+            }}
+            onNext={() => {
+              setLogViewerDrawerState({ visible: true, currentIndex: logViewerDrawerState.currentIndex + 1 });
+            }}
+          >
+            {logViewerExtraRender && logViewerExtraRender(data[logViewerDrawerState.currentIndex])}
+          </LogDetailActions>
+        }
         placement='right'
+        defaultSize='middle'
         onClose={() => {
           setLogViewerDrawerState({ visible: false, currentIndex: -1 });
         }}

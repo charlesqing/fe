@@ -37,9 +37,31 @@ describe('buildAiAnalyzeContent', () => {
   it('injects readable time for epoch fields only', () => {
     const content = buildAiAnalyzeContent(logItem, '_timestamp');
     expect(content).toContain('"_timestamp_readable"');
-    expect(content).toContain('"timestamp_readable"');
     expect(content).not.toContain('"status_readable"');
     expect(content).not.toContain('"level_readable"');
+  });
+
+  it('strips platform internal keys (row id / raw copy / normalization wrappers)', () => {
+    const content = buildAiAnalyzeContent(
+      {
+        ...logItem,
+        __n9e_id_n9e__: 'log_id_42',
+        __n9e_raw_n9e__: { _timestamp: '1786801681627000000', level: 'info' },
+        ___id___: 'loki_log_1',
+        ___raw___: { line: 'x' },
+      },
+      '_timestamp',
+    );
+    expect(content).not.toContain('__n9e_id_n9e__');
+    expect(content).not.toContain('__n9e_raw_n9e__');
+    expect(content).not.toContain('___id___');
+    expect(content).not.toContain('___raw___');
+    // timestamp/__timestamp__ 是归一化包装字段（与原始行的 _timestamp 重复），一并剔除
+    expect(content).not.toContain('"timestamp"');
+    expect(content).not.toContain('"timestamp_readable"');
+    expect(content).not.toContain('"__timestamp__"');
+    // 原始行字段保留
+    expect(content).toContain('"level": "info"');
   });
 
   it('keeps the original log fields intact', () => {

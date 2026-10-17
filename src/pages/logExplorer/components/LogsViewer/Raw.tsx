@@ -3,23 +3,22 @@ import _ from 'lodash';
 import moment from 'moment';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { Tooltip, Empty, Space, Button } from 'antd';
+import { Tooltip, Empty, Space } from 'antd';
 import { CaretDownOutlined, CaretRightOutlined, CaretUpOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Virtuoso } from 'react-virtuoso';
 import { useClickAway } from 'ahooks';
 
 import NavigableDrawer from '@/components/NavigableDrawer';
-import { useAiChatContext } from '@/components/AiChatNG';
 
 import { NAME_SPACE } from '../../constants';
 import { OnValueFilterParams, FieldValueType } from './types';
 import LogViewer from './components/LogViewer';
+import LogDetailActions from './components/LogDetailActions';
 import TextSearchIcon from './components/TextSearchIcon';
 import LogFieldValue from './components/LogFieldValue';
 import { LogsViewerStateContext } from './index';
 import { shouldRenderMultilineValueAsSingleField } from './renderValue';
 import { shouldIgnoreLogViewerClickAway } from './utils/clickAway';
-import { buildAiAnalyzeContent } from './utils/aiAnalyze';
 
 const explorerOriginInlineCellClassName = 'inline-block mr-1 my-[2px] align-top';
 const explorerOriginBreakCellClassName = 'break-all block mr-1 my-[2px]';
@@ -639,7 +638,6 @@ const RawRow = React.memo(
 
 function Raw(props: Props) {
   const { t } = useTranslation(NAME_SPACE);
-  const { openAiChat } = useAiChatContext();
   const {
     timeField,
     data,
@@ -774,48 +772,22 @@ function Raw(props: Props) {
   const hasPrevLog = currentLogIndex > 0;
   const hasNextLog = currentLogIndex !== -1 && currentLogIndex < data.length - 1;
 
-  const handleAiAnalyze = () => {
-    const logItem = data[currentLogIndex];
-    if (!logItem) return;
-    // 预处理后再送模型：epoch 时间字段换算为可读时间 + 防编造/分节输出约束。
-    // 原始 JSON 直送时模型会自行推算时间戳（实测算错年份并捏造不存在的字段）
-    const content = buildAiAnalyzeContent(logItem, timeField);
-    openAiChat({
-      initialMessage: t('ai_analyze_prompt', { content }),
-    });
-  };
-
+  // 上一条 / 下一条 / AI 分析 + 数据源扩展操作（如搜索上下文）：与表格模式共用同一实现
   const drawerExtra = (
-    <span className='flex items-center gap-1'>
-      <Button
-        size='small'
-        icon={<LeftOutlined />}
-        disabled={!hasPrevLog}
-        onClick={() => {
-          setLogViewerDrawerState({ visible: true, currentIndex: currentLogIndex - 1 });
-        }}
-      >
-        {t('prev')}
-      </Button>
-      <Button
-        size='small'
-        icon={<RightOutlined />}
-        disabled={!hasNextLog}
-        onClick={() => {
-          setLogViewerDrawerState({ visible: true, currentIndex: currentLogIndex + 1 });
-        }}
-      >
-        {t('next')}
-      </Button>
-      <Button
-        size='small'
-        icon={<img src='/image/ai-chat/ai.gif' style={{ width: 14, height: 14, marginRight: 4 }} alt='AI' />}
-        onClick={handleAiAnalyze}
-      >
-        {t('ai_analyze')}
-      </Button>
+    <LogDetailActions
+      log={data[currentLogIndex]}
+      timeField={timeField}
+      hasPrev={hasPrevLog}
+      hasNext={hasNextLog}
+      onPrev={() => {
+        setLogViewerDrawerState({ visible: true, currentIndex: currentLogIndex - 1 });
+      }}
+      onNext={() => {
+        setLogViewerDrawerState({ visible: true, currentIndex: currentLogIndex + 1 });
+      }}
+    >
       {logViewerExtraRender && logViewerExtraRender(data[currentLogIndex])}
-    </span>
+    </LogDetailActions>
   );
 
   return (
@@ -876,6 +848,7 @@ function Raw(props: Props) {
         title={navigableDrawerTitle}
         extra={drawerExtra}
         placement='right'
+        defaultSize='middle'
         onClose={() => {
           setLogViewerDrawerState({ visible: false, currentIndex: -1 });
         }}

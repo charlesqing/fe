@@ -26,6 +26,7 @@ const pt_BR = {
   "share_tip": "Clique para copiar o link de compartilhamento",
   "log_viewer_drawer_trigger_tip": "Clique para ver os detalhes do log",
   "log_viewer_drawer_title": "Detalhes do log",
+  "wrap_line": "Quebra de linha",
   "copy_to_clipboard": "Copiar para a área de transferência",
   "unindexable": "As estatísticas não estão ativadas para este campo, então não é possível analisá-lo",
   "topn_no_data": "Sem dados",

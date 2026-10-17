@@ -30,6 +30,7 @@ const en_US = {
   next: 'Next',
   ai_analyze: 'AI Analyze',
   ai_analyze_prompt: 'Please analyze the following log content, point out possible issues, causes, and suggestions:\n\n{{content}}',
+  wrap_line: 'Wrap',
   copy_to_clipboard: 'Copy to clipboard',
   topn_no_data: 'No data',
   unindexable: 'Field statistics not enabled, unable to perform statistical analysis',

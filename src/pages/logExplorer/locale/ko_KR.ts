@@ -26,6 +26,7 @@ const ko_KR = {
   "share_tip": "클릭해서 공유 링크 복사",
   "log_viewer_drawer_trigger_tip": "클릭해서 로그 상세 보기",
   "log_viewer_drawer_title": "로그 상세",
+  "wrap_line": "줄 바꿈",
   "copy_to_clipboard": "클립보드에 복사",
   "unindexable": "이 필드는 통계가 꺼져 있어 통계 분석을 할 수 없습니다",
   "topn_no_data": "데이터 없음",

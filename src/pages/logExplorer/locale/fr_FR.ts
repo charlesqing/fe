@@ -26,6 +26,7 @@ const fr_FR = {
   "share_tip": "Cliquez pour copier le lien de partage",
   "log_viewer_drawer_trigger_tip": "Cliquez pour voir le détail du journal",
   "log_viewer_drawer_title": "Détail du journal",
+  "wrap_line": "Retour à la ligne",
   "copy_to_clipboard": "Copier dans le presse-papiers",
   "unindexable": "Les statistiques ne sont pas activées sur ce champ : aucune analyse statistique n'est possible",
   "topn_no_data": "Aucune donnée",

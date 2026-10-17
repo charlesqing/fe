@@ -30,6 +30,7 @@ const zh_CN = {
   next: '下一条',
   ai_analyze: 'AI 分析',
   ai_analyze_prompt: '请分析以下日志内容，指出可能的问题、原因以及处理建议：\n\n{{content}}',
+  wrap_line: '换行',
   copy_to_clipboard: '复制到剪贴板',
   unindexable: '字段未开启统计，无法进行统计分析',
   topn_no_data: '无数据',

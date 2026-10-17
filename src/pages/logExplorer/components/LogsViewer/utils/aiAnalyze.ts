@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 /**
  * AI 日志分析的内容预处理（日志详情页「AI 分析」按钮，见 Raw.tsx handleAiAnalyze）。
  *
@@ -18,7 +20,16 @@
  */
 
 /**
- * 单位 → 毫秒的换算除数，按 毫秒/秒/微秒/纳秒 顺序尝试：
+ * 平台内部键：行唯一键 / 原始行副本（各插件 ExplorerNG 注入，命名约定见
+ * filteredFields.BUILTIN_FIELDS）与 lokikit 归一化包装字段 timestamp/__timestamp__
+ * （对展示层与日志分析均无信息量：openobserve 等插件的原始行里已有 _timestamp）。
+ *
+ * 不过滤的后果：openobserve 的 __n9e_raw_n9e__ 是整行的副本，会让 prompt 体积
+ * 翻倍且内容重复；时间字段换算也会为 timestamp/__timestamp__ 各生成一份换算清单。
+ */
+const INTERNAL_KEYS = ['__n9e_id_n9e__', '__n9e_raw_n9e__', '___id___', '___raw___', '__id__', '__raw__', 'timestamp', '__timestamp__'];
+
+/** 单位 → 毫秒的换算除数，按 毫秒/秒/微秒/纳秒 顺序尝试：
  * 秒级要乘 1000 得毫秒（除数 1e-3），微秒/纳秒则除。
  * 只接受换算后年份落在 [2000, 2100] 的结果——同一数值按不同单位解释可能
  * 多个"合法"，合理年份区间即可过滤歧义（如 1786801681627000000 按毫秒/秒
@@ -71,19 +82,21 @@ export function toReadableTime(value: unknown): string | undefined {
  * timeField 为数据源配置的时间字段（通常 _timestamp），会在换算清单里标注。
  */
 export function buildAiAnalyzeContent(logItem: Record<string, any>, timeField?: string): string {
-  const enriched: Record<string, any> = { ...logItem };
+  // 先剔除平台内部键，再基于可见字段生成内容（详情页展示给用户的即这批字段）
+  const log = _.omit(logItem, INTERNAL_KEYS);
+  const enriched: Record<string, any> = { ...log };
   const notes: string[] = [];
 
-  const keys = Object.keys(logItem);
+  const keys = Object.keys(log);
   // 时间字段排在最前标注，其余按原顺序
   const orderedKeys = timeField && keys.includes(timeField) ? [timeField, ...keys.filter((k) => k !== timeField)] : keys;
 
   orderedKeys.forEach((key) => {
-    const readable = toReadableTime(logItem[key]);
+    const readable = toReadableTime(log[key]);
     if (!readable) return;
     enriched[`${key}_readable`] = readable;
     const mark = key === timeField ? '（日志时间字段）' : '';
-    notes.push(`- ${key}${mark}: ${JSON.stringify(logItem[key])} = ${readable}`);
+    notes.push(`- ${key}${mark}: ${JSON.stringify(log[key])} = ${readable}`);
   });
 
   const timeBlock = notes.length ? `\n\n【时间字段换算】\n${notes.join('\n')}` : '';
