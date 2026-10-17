@@ -30,8 +30,9 @@ export default function GraphPreview({ datasourceValue, query }) {
   const fetchData = () => {
     if (datasourceId) {
       const parsedRange = parseRange(range);
-      const from = moment(parsedRange.start).unix();
-      const to = moment(parsedRange.end).unix();
+      // 后端 openobserve 统一毫秒契约（toMicros = ms * 1000），必须用 valueOf()
+      const from = moment(parsedRange.start).valueOf();
+      const to = moment(parsedRange.end).valueOf();
       setLoading(true);
       logQuery({
         cate: DatasourceCateEnum.openobserve,
@@ -119,7 +120,9 @@ export default function GraphPreview({ datasourceValue, query }) {
               <Table
                 loading={loading}
                 size='small'
-                rowKey='_ts'
+                // victorialogs 数据含 _ts，OpenObserve 行没有该字段（时间列为 _timestamp）；
+                // rowKey 指向缺失字段会使所有行 key 为 undefined，改用时间列并回退索引
+                rowKey={(record: any) => record?._timestamp ?? record?._ts ?? JSON.stringify(record)}
                 tableLayout='auto'
                 dataSource={data}
                 columns={_.map(columns, (item) => {

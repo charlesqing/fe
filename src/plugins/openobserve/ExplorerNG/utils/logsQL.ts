@@ -17,6 +17,16 @@ function escapeSQLValue(value: any): string {
   return `'${_.toString(value).replace(/'/g, "''")}'`;
 }
 
+// DataFusion 的 LIKE 默认不把反斜杠当转义符，需显式 ESCAPE '\'；
+// 否则用户值里的 %/_ 会被当通配符（如搜索 "100%" 会匹配多余行）。
+// 仅转义用户值本身，contains 的包裹通配符 % 在函数内追加。
+const LIKE_ESCAPE_SUFFIX = String.raw` ESCAPE '\'`;
+
+function escapeSQLLikeValue(value: any): string {
+  const escaped = _.toString(value).replace(/'/g, "''").replace(/[%_\\]/g, String.raw`\$&`);
+  return `'%${escaped}%'${LIKE_ESCAPE_SUFFIX}`;
+}
+
 function renderFilter(filter: OpenObserveFilter): string {
   const field = _.trim(filter.field);
   if (!field) return '';
@@ -28,9 +38,9 @@ function renderFilter(filter: OpenObserveFilter): string {
     case 'neq':
       return `${field} != ${escapeSQLValue(value)}`;
     case 'contains':
-      return `${field} LIKE ${escapeSQLValue(`%${value}%`)}`;
+      return `${field} LIKE ${escapeSQLLikeValue(value)}`;
     case 'not_contains':
-      return `${field} NOT LIKE ${escapeSQLValue(`%${value}%`)}`;
+      return `${field} NOT LIKE ${escapeSQLLikeValue(value)}`;
     case 'regex':
       return `regexp_like(${field}, ${escapeSQLValue(value)})`;
     case 'not_regex':
@@ -145,7 +155,10 @@ export function inferMetricTimeseriesKeysFromQuery(query?: string) {
 
 // 原始 Builder 状态 → 标准 SQL 完整 SELECT（统计图表模式）。
 // 含时间桶（date_trunc）以便时序图按时间轴绘制；FROM "stream" 由调用方传入（后端 SELECT 透传不会注入 stream）。
-export function renderMetricLogsQL(builder?: OpenObserveMetricBuilderState, options?: RenderLogsQLOptions, stream?: string): string {
+// timeField 取数据源配置的时间字段（默认 _timestamp）：后端 raw 查询用 oo.timeField() 尊重配置，
+// 这里也必须一致，否则自定义时间字段的数据源在统计图表模式下会按错误列分桶。
+export function renderMetricLogsQL(builder?: OpenObserveMetricBuilderState, options?: RenderLogsQLOptions, stream?: string, timeField?: string): string {
+  const tf = _.trim(timeField) || '_timestamp';
   const whereFilters = _.compact(_.map(builder?.filters || [], renderFilter));
   const baseWhere = whereFilters.length ? _.join(whereFilters, ' AND ') : '';
   const aggregations = _.compact(_.map(builder?.aggregations || [], renderAggregation));
@@ -155,13 +168,13 @@ export function renderMetricLogsQL(builder?: OpenObserveMetricBuilderState, opti
   }
 
   const groupBy = _.filter(builder?.groupBy || [], Boolean);
-  const timeBucket = `date_trunc('minute', _timestamp) AS "_timestamp"`;
+  const timeBucket = `date_trunc('minute', ${tf}) AS "_timestamp"`;
 
   const selectCols = [timeBucket];
   if (!_.isEmpty(groupBy)) selectCols.push(_.join(groupBy, ', '));
   selectCols.push(_.join(aggregations, ', '));
 
-  const groupByCols = ['date_trunc(\'minute\', _timestamp)', ...groupBy];
+  const groupByCols = [`date_trunc('minute', ${tf})`, ...groupBy];
 
   let sql = `SELECT ${_.join(selectCols, ', ')} FROM "${stream || ''}"`;
   if (baseWhere) sql += ` WHERE ${baseWhere}`;
@@ -180,7 +193,10 @@ export function renderMetricLogsQL(builder?: OpenObserveMetricBuilderState, opti
 }
 
 // 依据查询内容判断是日志原文（raw）还是统计图表（metric）。
-// 标准 SQL 聚合查询（含 GROUP BY）即视为 metric；兼容遗留 LogSQL 管道写法。
+// 标准 SQL 聚合查询（含 GROUP BY、或以 SELECT + 聚合函数开头的单值查询）即视为 metric；
+// 兼容遗留 LogSQL 管道写法。
+const AGGREGATE_FUNC_RE = /\b(count|sum|avg|min|max|approx_percentile|stddev|variance)\s*\(/i;
+
 export function classifyExplorerMode(userQL?: string): 'raw' | 'metric' {
   const q = _.trim(userQL || '');
   const lower = _.toLower(q);
@@ -188,6 +204,8 @@ export function classifyExplorerMode(userQL?: string): 'raw' | 'metric' {
 
   // 标准 SQL 聚合
   if (/\bgroup\s+by\b/.test(lower)) return 'metric';
+  // 单值聚合查询（如 SELECT count(*) FROM "s"，无 GROUP BY）也是 metric
+  if (/^\s*select\b/i.test(q) && AGGREGATE_FUNC_RE.test(q)) return 'metric';
 
   // 掩码单引号字符串字面量，避免 'a|b' 这类值内部的竖线被误判为管道符
   //（如 Builder regex 算子产出的 regexp_like(msg, 'timeout|fail')）。

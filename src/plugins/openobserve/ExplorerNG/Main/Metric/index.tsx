@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import moment from 'moment';
-import { Empty, Form, Pagination, Radio, Select, Space, Spin, Tooltip } from 'antd';
+import { Empty, Form, Pagination, Radio, Select, Space, Spin, Tooltip, message } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { AlignedData, Options } from 'uplot';
 import { useRequest, useSize } from 'ahooks';
@@ -259,8 +259,10 @@ export default function Metric(props: Props) {
         query: [
           {
             query: _.trim(latestQueryValues.query),
-            start: moment(range.start).unix(),
-            end: moment(range.end).unix(),
+            // 后端 openobserve 统一毫秒契约（toMicros = ms * 1000），必须用 valueOf()；
+            // 此前误用 unix()（秒）导致时间范围错 1000 倍、统计表格查不到数据
+            start: moment(range.start).valueOf(),
+            end: moment(range.end).valueOf(),
             ref: 'A',
             org: latestQueryValues?.org,
             stream: latestQueryValues?.stream,
@@ -286,8 +288,10 @@ export default function Metric(props: Props) {
             fields: filterOutBuiltinFields(getFieldsFromTableData(visibleList)),
           };
         })
-        .catch(() => {
+        .catch((e: any) => {
           loadTimeRef.current = null;
+          // 统计表格查询失败需用户可见（此前静默返回空列表，会被误判为"无数据"）
+          message.error(e?.message || e?.msg || 'Query failed');
           return {
             list: [],
             total: 0,
@@ -345,8 +349,9 @@ export default function Metric(props: Props) {
       query: [
         {
           query: _.trim(queryValues.query),
-          start: moment(range.start).unix(),
-          end: moment(range.end).unix(),
+          // 毫秒契约（toMicros = ms * 1000），与 raw 表格保持一致
+          start: moment(range.start).valueOf(),
+          end: moment(range.end).valueOf(),
           keys,
           ref: 'A',
           org: queryValues?.org,
@@ -370,7 +375,8 @@ export default function Metric(props: Props) {
       })
       .catch((err) => {
         if (requestId !== timeseriesRequestIdRef.current) return;
-        console.error('openobserve dsQuery failed:', err);
+        // 时序查询失败需用户可见（此前仅 console.error）
+        message.error(err?.message || err?.msg || 'Query failed');
         setSeries([]);
         setDataRefresh(_.uniqueId('dataRefresh_'));
       })

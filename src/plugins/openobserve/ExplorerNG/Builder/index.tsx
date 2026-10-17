@@ -24,6 +24,8 @@ interface Props {
   queryBuilderPinned: boolean;
   setQueryBuilderPinned: (pinned: boolean) => void;
   onClose: () => void;
+  /** 数据源配置的时间字段（默认 _timestamp），用于统计 SQL 的 date_trunc 时间桶 */
+  timeField?: string;
   onExecute: (query: string, values: { raw?: OpenObserveRawBuilderState; metric?: OpenObserveMetricBuilderState; vizType?: 'table' | 'timeseries' }) => void;
   onPreviewQL: (query: string, values: { raw?: OpenObserveRawBuilderState; metric?: OpenObserveMetricBuilderState; vizType?: 'table' | 'timeseries' }) => void;
 }
@@ -69,9 +71,10 @@ const SUGGESTION_DEBOUNCE_WAIT = 600;
 function getRangeUnix(range: any) {
   if (!range) return undefined;
   const parsed = parseRange(range);
+  // 后端 openobserve 各 Query* 入口统一按毫秒契约（toMicros = ms * 1000），必须用 valueOf()
   return {
-    start: moment(parsed.start).unix(),
-    end: moment(parsed.end).unix(),
+    start: moment(parsed.start).valueOf(),
+    end: moment(parsed.end).valueOf(),
   };
 }
 
@@ -741,7 +744,7 @@ function OrderBy(props: {
 }
 
 export default function Builder(props: Props) {
-  const { visible, mode, queryBuilderPinned, setQueryBuilderPinned, onClose, onExecute, onPreviewQL } = props;
+  const { visible, mode, queryBuilderPinned, setQueryBuilderPinned, onClose, onExecute, onPreviewQL, timeField } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   const parentForm = Form.useFormInstance();
   const [form] = Form.useForm();
@@ -807,8 +810,11 @@ export default function Builder(props: Props) {
     const values = form.getFieldsValue();
     if (mode === 'metric') {
       const metric = values as OpenObserveMetricBuilderState;
+      // stream 取自外层 Explorer 表单（OrgStreamSelector 写入 query.stream）；
+      // Builder 自己的 form 没有 query 字段，此前读 values.query?.stream 恒为 undefined 导致 FROM ""
+      const stream = queryValues?.stream;
       return {
-        query: renderMetricLogsQL(metric, { multiline: true }, values.query?.stream),
+        query: renderMetricLogsQL(metric, { multiline: true }, stream, timeField),
         values: {
           metric,
           raw: { filters: values.filters || [] },

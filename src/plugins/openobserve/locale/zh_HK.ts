@@ -101,6 +101,7 @@ const zh_HK = {
     query_warning_no_time: '強烈建議在查詢條件中使用 _time (時間字段) 明確限制時間範圍，否則可能導致：<b>存儲負載異常，告警查詢超時</b>等問題',
     eval_window: '評估窗口',
     eval_window_help: '日誌告警按此時間範圍統計匹配條數（如最近 5 分鐘），預設 60 秒',
+    eval_window_placeholder: '1 分鐘 (預設 60s)',
     mode: '查詢模式',
     mode_sql: 'SQL 模式',
     mode_simple: '簡單模式',

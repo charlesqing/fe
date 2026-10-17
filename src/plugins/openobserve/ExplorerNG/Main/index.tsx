@@ -13,6 +13,7 @@ import { BUILDER_PINNED_CACHE_KEY, METRIC_DEFAULT_QUERY, RAW_DEFAULT_QUERY } fro
 import { Field } from '../types';
 import Builder from '../Builder';
 import { inferMetricTimeseriesKeys } from '../utils/logsQL';
+import { useOpenObserveTimeField } from '../utils/useOpenObserveTimeField';
 import MainMoreOperations from '../components/MainMoreOperations';
 import OrgStreamSelector from '../components/OrgStreamSelector';
 import Metric from './Metric';
@@ -33,6 +34,9 @@ export default function Main(props: Props) {
   const { tabKey, indexData, executeLoading, setExecuteLoading, executeQuery } = props;
   const form = Form.useFormInstance();
   const queryValues = Form.useWatch('query', form);
+  const datasourceValue = Form.useWatch('datasourceValue', form);
+  // 数据源配置的时间字段：后端 raw 查询（oo.timeField）与前端展示/Builder SQL 共用同一口径
+  const timeField = useOpenObserveTimeField(datasourceValue);
   const mode = queryValues?.mode || 'raw';
   const [queryBuilderPinned, setQueryBuilderPinned] = useState(() => localStorage.getItem(BUILDER_PINNED_CACHE_KEY) === 'true');
   const [queryBuilderVisible, setQueryBuilderVisible] = useState(false);
@@ -148,6 +152,7 @@ export default function Main(props: Props) {
         <Builder
           visible={!queryBuilderPinned ? queryBuilderVisible : true}
           mode={mode}
+          timeField={timeField}
           onClose={() => {
             if (!queryBuilderPinned) {
               setQueryBuilderVisible(false);
@@ -226,6 +231,7 @@ export default function Main(props: Props) {
             setExecuteLoading={setExecuteLoading}
             executeQuery={executeCommittedQuery}
             snapRangeResetKey={snapRangeResetKey}
+            timeField={timeField}
           />
         )}
       </div>

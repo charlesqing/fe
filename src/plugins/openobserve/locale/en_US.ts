@@ -102,6 +102,7 @@ const en_US = {
       'It is strongly recommended to use _time (time field) in the query conditions to explicitly limit the time range, otherwise it may lead to issues such as: <b>abnormal storage load, alert query timeout</b>',
     eval_window: 'Evaluation window',
     eval_window_help: 'Count matching logs over this time range (e.g. last 5 minutes). Default 60s.',
+    eval_window_placeholder: '1 minute (default 60s)',
     mode: 'Query mode',
     mode_sql: 'SQL mode',
     mode_simple: 'Simple mode',

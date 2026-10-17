@@ -101,6 +101,7 @@ const zh_CN = {
     query_warning_no_time: '强烈建议在查询条件中使用 _time (时间字段) 明确限制时间范围，否则可能导致：<b>存储负载异常，告警查询超时</b>等问题',
     eval_window: '评估窗口',
     eval_window_help: '日志告警按此时间范围统计匹配条数（如最近 5 分钟），默认 60 秒',
+    eval_window_placeholder: '1 分钟 (默认 60s)',
     mode: '查询模式',
     mode_sql: 'SQL 模式',
     mode_simple: '简单模式',

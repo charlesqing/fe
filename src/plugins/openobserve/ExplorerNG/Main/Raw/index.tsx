@@ -35,6 +35,8 @@ interface Props {
   setExecuteLoading: (loading: boolean) => void;
   executeQuery: () => void;
   snapRangeResetKey?: string;
+  /** 数据源配置的时间字段（默认 _timestamp），用于时间列展示 */
+  timeField?: string;
 }
 
 interface LogsData {
@@ -74,7 +76,7 @@ function isNoDataError(error: any) {
 
 export default function Raw(props: Props) {
   const { t } = useTranslation(NAME_SPACE);
-  const { tableSelector, indexData, setExecuteLoading, executeQuery, snapRangeResetKey } = props;
+  const { tableSelector, indexData, setExecuteLoading, executeQuery, snapRangeResetKey, timeField } = props;
   const form = Form.useFormInstance();
   const refreshFlag = Form.useWatch('refreshFlag');
   const datasourceValue = Form.useWatch('datasourceValue');
@@ -259,7 +261,10 @@ export default function Raw(props: Props) {
             hash: _.uniqueId('histogram_'),
           };
         })
-        .catch(() => {
+        .catch((e: any) => {
+          // 直方图失败不阻塞主列表，但需给用户可见反馈（此前静默降级，用户无从判断分布缺失原因）；
+          // 文案与同文件主列表 catch 保持一致（上游模式）
+          message.error(e?.message || e?.msg || 'Query failed');
           return {
             data: [],
             hash: _.uniqueId('histogram_'),
@@ -327,7 +332,7 @@ export default function Raw(props: Props) {
           range={queryValues?.range}
           id_key='__n9e_id_n9e__'
           raw_key='__n9e_raw_n9e__'
-          timeField={DEFAULT_TIME_FIELD}
+          timeField={timeField || DEFAULT_TIME_FIELD}
           histogramLoading={histogramLoading}
           histogram={histogramData?.data || []}
           histogramHash={histogramData?.hash}

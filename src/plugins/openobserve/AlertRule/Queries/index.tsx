@@ -117,7 +117,7 @@ export default function index({ prefixField = {}, fullPrefixName = [], prefixNam
                               >
                                 <Select
                                   style={{ width: 130 }}
-                                  placeholder='1 分钟 (默认 60s)'
+                                  placeholder={t('alert.eval_window_placeholder')}
                                   options={[
                                     { label: '1 分钟', value: 60 },
                                     { label: '5 分钟', value: 300 },

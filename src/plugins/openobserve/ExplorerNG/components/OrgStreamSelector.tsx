@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Form, Select, Space } from 'antd';
+import { Form, Select, Space, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { DatasourceCateEnum } from '@/utils/constant';
@@ -38,6 +38,10 @@ export default function OrgStreamSelector() {
         const current = form.getFieldValue('query') || {};
         const nextStream = current.stream && list.includes(current.stream) ? current.stream : list[0];
         form.setFieldsValue({ query: { ...current, stream: nextStream } });
+      } catch (e: any) {
+        // 失败时给用户可见反馈（此前无 catch，unhandled rejection 且选择器无提示）
+        message.error(e?.message || e?.msg || 'Failed to load streams');
+        setStreams([]);
       } finally {
         setLoadingStreams(false);
       }
@@ -62,6 +66,11 @@ export default function OrgStreamSelector() {
       } else {
         setStreams([]);
       }
+    } catch (e: any) {
+      // 组织列表拉取失败（数据源不可达/凭证错误）需明确告知用户
+      message.error(e?.message || e?.msg || 'Failed to load organizations');
+      setOrgs([]);
+      setStreams([]);
     } finally {
       setLoadingOrgs(false);
     }
