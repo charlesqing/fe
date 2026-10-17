@@ -19,6 +19,7 @@ import LogFieldValue from './components/LogFieldValue';
 import { LogsViewerStateContext } from './index';
 import { shouldRenderMultilineValueAsSingleField } from './renderValue';
 import { shouldIgnoreLogViewerClickAway } from './utils/clickAway';
+import { buildAiAnalyzeContent } from './utils/aiAnalyze';
 
 const explorerOriginInlineCellClassName = 'inline-block mr-1 my-[2px] align-top';
 const explorerOriginBreakCellClassName = 'break-all block mr-1 my-[2px]';
@@ -776,7 +777,9 @@ function Raw(props: Props) {
   const handleAiAnalyze = () => {
     const logItem = data[currentLogIndex];
     if (!logItem) return;
-    const content = JSON.stringify(logItem, null, 2);
+    // 预处理后再送模型：epoch 时间字段换算为可读时间 + 防编造/分节输出约束。
+    // 原始 JSON 直送时模型会自行推算时间戳（实测算错年份并捏造不存在的字段）
+    const content = buildAiAnalyzeContent(logItem, timeField);
     openAiChat({
       initialMessage: t('ai_analyze_prompt', { content }),
     });
