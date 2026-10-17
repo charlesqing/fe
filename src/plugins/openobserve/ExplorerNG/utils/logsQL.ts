@@ -13,10 +13,8 @@ interface RenderLogsQLOptions {
 
 function escapeSQLValue(value: any): string {
   if (_.isNumber(value) || _.isBoolean(value)) return String(value);
-  const str = _.toString(value);
-  // 简单标识符（字段/词）不加引号；其余按字符串单引号包裹，单引号转义为 ''
-  if (/^[A-Za-z0-9_.:@/-]+$/.test(str)) return `'${str}'`;
-  return `'${str.replace(/'/g, "''")}'`;
+  // 字符串统一按单引号包裹，内部单引号转义为 ''（DataFusion 比较时会按列类型 coerce 字面量）
+  return `'${_.toString(value).replace(/'/g, "''")}'`;
 }
 
 function renderFilter(filter: OpenObserveFilter): string {
@@ -191,11 +189,15 @@ export function classifyExplorerMode(userQL?: string): 'raw' | 'metric' {
   // 标准 SQL 聚合
   if (/\bgroup\s+by\b/.test(lower)) return 'metric';
 
+  // 掩码单引号字符串字面量，避免 'a|b' 这类值内部的竖线被误判为管道符
+  //（如 Builder regex 算子产出的 regexp_like(msg, 'timeout|fail')）。
+  const masked = lower.replace(/'[^']*'/g, "''");
+
   // 遗留 LogSQL 管道
-  if (/\|\s*stats\b/.test(lower)) return 'metric';
-  if (lower.includes('|')) {
-    if (/\|\s*(sort\s+by|limit|offset|fields|rename)\b/.test(lower)) return 'metric';
-    if (/\|\s*(filter|extract|replace|json|pack_json|unpack_json)\b/.test(lower)) return 'raw';
+  if (/\|\s*stats\b/.test(masked)) return 'metric';
+  if (masked.includes('|')) {
+    if (/\|\s*(sort\s+by|limit|offset|fields|rename)\b/.test(masked)) return 'metric';
+    if (/\|\s*(filter|extract|replace|json|pack_json|unpack_json)\b/.test(masked)) return 'raw';
     return 'metric';
   }
 

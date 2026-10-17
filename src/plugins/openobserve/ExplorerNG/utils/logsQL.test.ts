@@ -8,9 +8,16 @@ describe('OpenObserve ExplorerNG logsQL utils (standard SQL)', () => {
     ['level = \'error\'', 'raw'],
     ['status = 500 AND level = \'error\'', 'raw'],
     ['a = 1 AND b != 2', 'raw'],
+    // 引号字符串字面量内的竖线不是管道符，必须保持 raw
+    ['regexp_like(msg, \'timeout|fail\')', 'raw'],
+    ['msg LIKE \'%a|b%\'', 'raw'],
+    ['level = \'error\' AND regexp_like(msg, \'timeout|fail\')', 'raw'],
     ['SELECT count(*) FROM "stream" GROUP BY service', 'metric'],
     ['select service, count(*) as count from "logs" group by service', 'metric'],
     ['SELECT date_trunc(\'minute\', _timestamp) AS "_timestamp", service, count(*) AS count FROM "s" GROUP BY date_trunc(\'minute\', _timestamp), service', 'metric'],
+    // 遗留 LogSQL 管道写法仍识别为 metric
+    ['* | stats by (service) count() as count', 'metric'],
+    ['* | sort by (_time)', 'metric'],
   ])('classifies %s as %s', (query, mode) => {
     expect(classifyExplorerMode(query)).toBe(mode);
   });
@@ -28,6 +35,13 @@ describe('OpenObserve ExplorerNG logsQL utils (standard SQL)', () => {
 
   it('renders empty raw fragment as * (match all)', () => {
     expect(renderLogsQL({ filters: [] })).toBe('*');
+  });
+
+  it('renders regex filter as regexp_like with escaped value', () => {
+    const query = renderLogsQL({
+      filters: [{ id: '1', field: 'msg', op: 'regex', value: 'timeout|fail' }],
+    });
+    expect(query).toBe(`regexp_like(msg, 'timeout|fail')`);
   });
 
   it('renders metric SELECT with time bucket, group by and aggregations', () => {
