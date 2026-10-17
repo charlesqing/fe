@@ -20,6 +20,8 @@ export function logsQuery(data: {
     reverse?: boolean;
     org?: string;
     stream?: string;
+    /** 跳过总数统计（上下文浏览等场景只要数据不要 count） */
+    skip_count?: boolean;
   }[];
 }): Promise<{
   list: Record<string, any>[];

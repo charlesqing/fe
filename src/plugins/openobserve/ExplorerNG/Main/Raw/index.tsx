@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import _ from 'lodash';
 import moment from 'moment';
-import { Empty, message, Pagination, Select, Space } from 'antd';
+import { Empty, message, Pagination, Select, Space, Dropdown, Menu, Button } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { Form } from 'antd';
 import { useRequest } from 'ahooks';
 import { Trans, useTranslation } from 'react-i18next';
@@ -17,11 +18,13 @@ import { DEFAULT_LOGS_PAGE_SIZE, DEFAULT_TIME_FIELD, LOGS_OPTIONS_CACHE_KEY, LOG
 import { getHistogram, logsQuery } from '../../services';
 import { Field } from '../../types';
 import filteredFields, { filterOutBuiltinFields } from '../../utils/filteredFields';
+import { formatTimeFieldValue, transformLogRow } from '../../utils/logRow';
 import { getOptionsFromLocalstorage, setOptionsToLocalstorage } from '../../utils/optionsLocalstorage';
-import renderBuiltinFields from '../../utils/renderBuiltinFields';
 import renderLogViewerFieldValueWithoutFilters from '../../utils/renderLogViewerFieldValueWithoutFilters';
 import useFieldConfig from '@/pages/logExplorer/components/RenderValue/useFieldConfig';
 import { getIsAtBottom, scrollToTop } from '../../utils/tableElementMethods';
+import ContextViewer from './components/ContextViewer';
+import { buildExportFilename, exportLogs, stripInternalFields, EXPORT_MAX_ROWS, ExportFormat } from '../../utils/exportLogs';
 
 // @ts-ignore
 import DownloadModal from 'plus:/components/LogDownload/DownloadModal';
@@ -96,6 +99,7 @@ export default function Raw(props: Props) {
     from: number;
     to: number;
   }>();
+  const [exporting, setExporting] = useState(false);
   const snapRangeRef = useRef<{
     from?: number;
     to?: number;
@@ -123,6 +127,60 @@ export default function Raw(props: Props) {
         reverse: true,
         refreshFlag: _.uniqueId('refreshFlag_'),
       });
+    }
+  };
+
+  /**
+   * 日志导出（对齐 openobserve 原版 Download logs）：按当前查询条件重新拉取，
+   * 而非只导出当前页——用户要的是"这次查询匹配的全部日志"。
+   * 时间窗优先取最近一次实际执行的窗口（rangeRef，含直方图框选/上下文吸附后的
+   * 窄窗），回退到时间选择器的值；单次上限 EXPORT_MAX_ROWS 条，超出提示截断。
+   */
+  const handleExport = async (format: ExportFormat) => {
+    const latestQueryValues = form.getFieldValue('query');
+    if (!datasourceValue || !latestQueryValues?.range) {
+      message.warning(t('export.no_data'));
+      return;
+    }
+    const parsedRange = parseRange(latestQueryValues.range);
+    const executedRange = rangeRef.current ?? {
+      from: moment(parsedRange.start).valueOf(),
+      to: moment(parsedRange.end).valueOf(),
+    };
+    const total = data?.total ?? 0;
+    const limit = Math.min(total > 0 ? total : EXPORT_MAX_ROWS, EXPORT_MAX_ROWS);
+    setExporting(true);
+    try {
+      const res = await logsQuery({
+        cate: DatasourceCateEnum.openobserve,
+        datasource_id: datasourceValue,
+        query: [
+          {
+            query: _.trim(latestQueryValues.query || '*') || '*',
+            start: moment(executedRange.from).valueOf(),
+            end: moment(executedRange.to).valueOf(),
+            limit,
+            ref: 'export',
+            org: latestQueryValues?.org,
+            stream: latestQueryValues?.stream,
+          },
+        ],
+      });
+      const rows = stripInternalFields(_.map(res.list || [], transformLogRow));
+      if (_.isEmpty(rows)) {
+        message.warning(t('export.no_data'));
+        return;
+      }
+      await exportLogs(rows, format, buildExportFilename(format));
+      if (total > EXPORT_MAX_ROWS) {
+        message.info(t('export.max_limit', { total, max: EXPORT_MAX_ROWS }));
+      } else {
+        message.success(t('export.success'));
+      }
+    } catch (e: any) {
+      message.error(e?.message || e?.msg || t('export.failed'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -163,13 +221,7 @@ export default function Raw(props: Props) {
           if (fixedRangeRef.current === false) {
             loadTimeRef.current = Date.now() - queryStart;
           }
-          const newData = _.map(res.list || [], (item) => {
-            return {
-              ...item,
-              __n9e_raw_n9e__: item,
-              __n9e_id_n9e__: _.uniqueId('log_id_'),
-            };
-          });
+          const newData = _.map(res.list || [], transformLogRow);
           if (appendRef.current) {
             appendRef.current = false;
             const mergedList = _.concat(data?.list || [], newData);
@@ -346,9 +398,12 @@ export default function Raw(props: Props) {
           setOrganizeFields={setOrganizeFields}
           filterFields={(fieldKeys) => filteredFields(fieldKeys, organizeFields)}
           logViewerFilterFields={(log) => filteredFields(_.keys(log), organizeFields)}
-          logViewerRenderCustomTagsArea={renderBuiltinFields}
+          logViewerExtraRender={(log) => (
+            <ContextViewer log={log} datasourceValue={datasourceValue} org={queryValues?.org} stream={queryValues?.stream} />
+          )}
           customLogFieldRender={renderLogViewerFieldValueWithoutFilters}
           logCollapsedByDefault
+          timeFieldColumnFormat={formatTimeFieldValue}
           renderHistogramAddonAfterRender={(toggleNode) => {
             if (data) {
               return (
@@ -375,6 +430,25 @@ export default function Raw(props: Props) {
                   <span>{loadTimeRef.current} ms</span>
                 </Space>
               )}
+              <Dropdown
+                overlay={
+                  <Menu>
+                    <Menu.Item key='csv' onClick={() => handleExport('csv')}>
+                      CSV
+                    </Menu.Item>
+                    <Menu.Item key='xlsx' onClick={() => handleExport('xlsx')}>
+                      XLSX
+                    </Menu.Item>
+                    <Menu.Item key='json' onClick={() => handleExport('json')}>
+                      JSON
+                    </Menu.Item>
+                  </Menu>
+                }
+              >
+                <Button size='small' loading={exporting} icon={<DownloadOutlined />}>
+                  {t('export.logs')}
+                </Button>
+              </Dropdown>
               {pageLoadMode === 'pagination' && (
                 <Select
                   size='small'
