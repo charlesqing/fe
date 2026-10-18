@@ -130,6 +130,17 @@ export const getMenuList = (embeddedProductMenu: MenuItem[] = [], hideDeprecated
       ],
     },
     {
+      key: 'zabbix',
+      label: 'menu.zabbix',
+      icon: <IconFont type='icon-Menu_Infrastructure' />,
+      children: [
+        {
+          key: '/zabbix/query',
+          label: 'menu.zabbix_query',
+        },
+      ],
+    },
+    {
       key: 'integrations',
       label: 'menu.integrations',
       icon: <IconFont type='icon-nav_infrastructure_light' />,

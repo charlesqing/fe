@@ -104,6 +104,18 @@ const getMenuList = (t) => {
       ],
     },
     {
+      key: 'zabbix',
+      icon: <IconFont type='icon-Menu_Infrastructure' />,
+      activeIcon: <Icon component={menuIcon.Infrastructure as any} />,
+      label: t('Zabbix 监控'),
+      children: [
+        {
+          key: '/zabbix/query',
+          label: t('监控查询'),
+        },
+      ],
+    },
+    {
       key: 'log',
       icon: <IconFont type='icon-Menu_LogAnalysis' />,
       activeIcon: <Icon component={menuIcon.LogAnalysis as any} />,

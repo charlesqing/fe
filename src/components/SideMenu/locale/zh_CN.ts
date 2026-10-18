@@ -24,6 +24,8 @@ const zh_CN = {
     dial_management: '拨测管理',
     pingmesh: '网络探测',
     explorer: '数据查询',
+    zabbix: 'Zabbix 监控',
+    zabbix_query: '监控查询',
     metrics: '指标',
     metric_explorer: '即时查询',
     metrics_built_in: '指标视图',

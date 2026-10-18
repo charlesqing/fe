@@ -1,0 +1,23 @@
+.zabbix-host-page {
+  .zabbix-host-row-selected {
+    background-color: rgba(22, 119, 255, 0.06);
+
+    & > td {
+      background-color: transparent !important;
+    }
+  }
+
+  // 抽屉内的表格：长文本换行（问题名 / 标签等），主表格保持不拆行
+  .ant-drawer .ant-table-cell {
+    word-break: break-word;
+  }
+
+  // 问题列表：严重级 >= 4（严重/灾难）整行浅红提示
+  .zabbix-problem-row-high {
+    background-color: rgba(245, 34, 45, 0.06);
+
+    & > td {
+      background-color: transparent !important;
+    }
+  }
+}

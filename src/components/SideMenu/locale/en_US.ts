@@ -24,6 +24,8 @@ const en_US = {
     dial_management: 'Heartbeat',
     pingmesh: 'Pingmesh',
     explorer: 'Explorer',
+    zabbix: 'Zabbix',
+    zabbix_query: 'Monitoring query',
     metrics: 'Metrics',
     metric_explorer: 'Metrics explorer',
     metrics_built_in: 'Built-in metrics',
