@@ -76,6 +76,7 @@ export enum BaseDatasourceCateEnum {
   doris = 'doris',
   victorialogs = 'victorialogs',
   openobserve = 'openobserve',
+  zabbix = 'zabbix',
 }
 
 export const DatasourceCateEnum = { ...BaseDatasourceCateEnum, ...AdvancedDatasourceCateEnum };

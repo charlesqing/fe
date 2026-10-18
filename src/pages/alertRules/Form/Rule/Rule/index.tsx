@@ -15,6 +15,7 @@ import { AlertRule as PgSQL } from '@/plugins/pgsql';
 import { AlertRule as Doris } from '@/plugins/doris';
 import { AlertRule as Victorialogs } from '@/plugins/victorialogs';
 import { AlertRule as OpenObserve } from '@/plugins/openobserve';
+import { AlertRule as Zabbix } from '@/plugins/zabbix';
 
 // @ts-ignore
 import PlusAlertRule from 'plus:/parcels/AlertRule';
@@ -49,6 +50,7 @@ export default function index() {
         {cate === DatasourceCateEnum.doris && <Doris disabled={false} datasourceCate={cate} datasourceValue={[datasourceValue]} />}
         {cate === DatasourceCateEnum.victorialogs && <Victorialogs datasourceValue={[datasourceValue]} />}
         {cate === DatasourceCateEnum.openobserve && <OpenObserve datasourceValue={[datasourceValue]} />}
+        {cate === DatasourceCateEnum.zabbix && <Zabbix datasourceValue={[datasourceValue]} />}
         <PlusAlertRule cate={cate} datasourceValue={datasourceValue} />
       </div>
 

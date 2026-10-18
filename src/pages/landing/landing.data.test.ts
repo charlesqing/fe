@@ -47,7 +47,7 @@ describe('landing.data', () => {
   it('数据源集成 chip 不为空且都有 logo', () => {
     // feat-openobserve 分支注册了 OpenObserve 数据源（landing.data.ts），
     // 上游该数量为 10，本分支为 11
-    expect(landingIntegrationProducts).toHaveLength(11);
+    expect(landingIntegrationProducts).toHaveLength(12);
     landingIntegrationProducts.forEach((item) => {
       expect(item.label).toBeTruthy();
       expect(item.iconUrl).toMatch(/^\/image\/logos\//);

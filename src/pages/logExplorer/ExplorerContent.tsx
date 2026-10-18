@@ -10,6 +10,7 @@ import Elasticsearch from '@/plugins/elasticsearch/ExplorerNG';
 import VictoriaLogs from '@/plugins/victorialogs/ExplorerNG';
 import Loki from '@/plugins/loki/ExplorerNG';
 import OpenObserve from '@/plugins/openobserve/ExplorerNG';
+import Zabbix from '@/plugins/zabbix/ExplorerNG';
 
 interface Props {
   tabKey: string;
@@ -40,6 +41,10 @@ export default function index(props: Props) {
 
   if (datasourceCate === DatasourceCateEnum.loki) {
     return <Loki tabKey={tabKey} defaultFormValuesControl={defaultFormValuesControl} renderCommonSettings={renderCommonSettings} />;
+  }
+
+  if (datasourceCate === DatasourceCateEnum.zabbix) {
+    return <Zabbix tabKey={tabKey} defaultFormValuesControl={defaultFormValuesControl} renderCommonSettings={renderCommonSettings} />;
   }
 
   return <Alert showIcon className='m-4' type='error' message={t('unsupported_datasource_type', { type: datasourceCate })} />;

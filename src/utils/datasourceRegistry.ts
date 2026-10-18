@@ -171,6 +171,21 @@ export const baseDatasourceCategories: DatasourceCategory[] = [
     alertPro: false,
     logo: '/image/logos/openobserve.png',
   },
+  {
+    value: 'zabbix',
+    label: 'Zabbix',
+    label_en: 'Zabbix',
+    type: ['metric', 'logging'],
+    alertRule: true,
+    // CE has no zabbix panel query editor (the dashboard QueryBuilder falls
+    // through to the plus parcel), so advertising dashboards would only let
+    // users create panels that cannot be edited or queried.
+    dashboard: false,
+    dashboardVariable: false,
+    graphPro: false,
+    alertPro: false,
+    logo: '/image/logos/zabbix.png',
+  },
 ];
 
 export const getDatasourceCategoryDisplayLabel = (cate: Pick<DatasourceCategory, 'label' | 'label_en'> | undefined, lang?: string) => {

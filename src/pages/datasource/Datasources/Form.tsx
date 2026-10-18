@@ -9,6 +9,7 @@ import PgSQL from '@/plugins/pgsql/Datasource/Form';
 import Doris from '@/plugins/doris/Datasource/Form';
 import Victorialogs from '@/plugins/victorialogs/Datasource/Form';
 import OpenObserve from '@/plugins/openobserve/Datasource/Form';
+import Zabbix from '@/plugins/zabbix/Datasource/Form';
 
 import Prometheus from './Prometheus/Form';
 import ElasticSearch from './ElasticSearch/Form';
@@ -59,6 +60,9 @@ export default function Form(props) {
   }
   if (params.type === DatasourceCateEnum.openobserve) {
     return <OpenObserve {...props} />;
+  }
+  if (params.type === DatasourceCateEnum.zabbix) {
+    return <Zabbix {...props} />;
   }
   return <Plus type={params.type} {...props} />;
 }
