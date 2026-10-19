@@ -17,10 +17,11 @@ import { IAiChatHistoryItem } from '@/components/AiChatNG/types';
 import { IS_ENT, IS_PLUS } from '@/utils/constant';
 
 // @ts-ignore
-import { AiTaskPage, MCPServerList } from 'plus:/parcels/NightingaleAI';
+import { AiTaskPage } from 'plus:/parcels/NightingaleAI';
 
 const LLMConfigList = React.lazy(() => import('@/pages/aiConfig/llmConfigs/pages/List'));
 const SkillList = React.lazy(() => import('@/pages/aiConfig/skills/pages/List'));
+const MCPServerList = React.lazy(() => import('@/pages/aiConfig/mcpServers/pages/List'));
 
 const PAGE_PATH = '/nightingale-ai';
 const SIDEBAR_WIDTH_STORAGE_KEY = 'nightingale-ai-sidebar-width';
@@ -30,7 +31,7 @@ const SIDEBAR_MAX_WIDTH = 480;
 const configItems = [
   { key: 'llm-configs', labelKey: 'nightingale.llm_configs', icon: Bot, perm: '/ai-config/llm-configs', component: LLMConfigList, plusOnly: false },
   { key: 'skills', labelKey: 'nightingale.skills', icon: Blocks, perm: '/ai-config/skills', component: SkillList, plusOnly: false },
-  { key: 'mcp-servers', labelKey: 'nightingale.mcp_servers', icon: Cable, perm: '/ai-config/mcp-servers', component: MCPServerList, plusOnly: true },
+  { key: 'mcp-servers', labelKey: 'nightingale.mcp_servers', icon: Cable, perm: '/ai-config/mcp-servers', component: MCPServerList, plusOnly: false },
   { key: 'ai-task', labelKey: 'nightingale.ai_task', icon: RadioTower, perm: '/ai-task', component: AiTaskPage, plusOnly: true },
 ] as const;
 

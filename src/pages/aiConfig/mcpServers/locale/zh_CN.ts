@@ -1,0 +1,42 @@
+const zh_CN = {
+  id: 'ID',
+  title: 'MCP 管理',
+  help: 'MCP 管理用于接入外部 MCP 服务器。配置完成后，在 AI Agent 中绑定对应服务器即可在智能问答时调用其提供的工具。支持 streamable-http 与 sse 两种远程传输。',
+  name: '名称',
+  description: '描述',
+  transport: '传输类型',
+  url: '服务器地址',
+  enabled: '启用',
+  disabled: '停用',
+  add_btn: '新建 MCP 服务器',
+  cannot_delete_when_enabled: '启用状态的 MCP 服务器无法删除',
+
+  form: {
+    add_title: '新建 MCP 服务器',
+    edit_title: '编辑 MCP 服务器',
+    test_connection: '测试连接',
+    test_connection_success: '连接成功',
+    test_connection_failure: '连接失败',
+    test_connection_result: '发现 {count} 个工具',
+    name_placeholder: '请输入 MCP 服务器名称',
+    description_placeholder: '请输入描述信息',
+    transport_map: {
+      'streamable-http': 'Streamable HTTP',
+      sse: 'SSE',
+    },
+    transport_tip: '远程 MCP 服务器的传输协议，可选 Streamable HTTP 或 SSE',
+    url_label: '服务器地址',
+    url_placeholder: '请输入 MCP 服务器端点，例如：https://mcp.example.com/mcp',
+    url_tip: 'Streamable HTTP 或 SSE 端点地址，必须以 http:// 或 https:// 开头',
+    timeout: '超时时间（秒）',
+    timeout_tip: '单次工具调用的超时时间，单位为秒',
+    timeout_placeholder: '例如 30',
+    headers: '请求头',
+    headers_key: 'Header 名',
+    headers_value: 'Header 值',
+    add_header: '添加请求头',
+    headers_tip: '附加到每个出站请求的自定义请求头，可用于鉴权（如 Authorization）',
+  },
+};
+
+export default zh_CN;

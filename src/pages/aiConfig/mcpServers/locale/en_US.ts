@@ -1,0 +1,42 @@
+const en_US = {
+  id: 'ID',
+  title: 'MCP management',
+  help: 'MCP management connects external MCP servers. After configuration, bind the server to an AI Agent to invoke its tools during chat. Both streamable-http and sse remote transports are supported.',
+  name: 'Name',
+  description: 'Description',
+  transport: 'Transport',
+  url: 'Server URL',
+  enabled: 'Enabled',
+  disabled: 'Disabled',
+  add_btn: 'Add MCP server',
+  cannot_delete_when_enabled: 'Cannot delete an enabled MCP server',
+
+  form: {
+    add_title: 'Add MCP server',
+    edit_title: 'Edit MCP server',
+    test_connection: 'Test connection',
+    test_connection_success: 'Connection successful',
+    test_connection_failure: 'Connection failed',
+    test_connection_result: 'Discovered {count} tools',
+    name_placeholder: 'Enter a name for the MCP server',
+    description_placeholder: 'Enter a description',
+    transport_map: {
+      'streamable-http': 'Streamable HTTP',
+      sse: 'SSE',
+    },
+    transport_tip: 'Transport protocol of the remote MCP server: Streamable HTTP or SSE',
+    url_label: 'Server URL',
+    url_placeholder: 'Enter the MCP server endpoint, e.g. https://mcp.example.com/mcp',
+    url_tip: 'Streamable HTTP or SSE endpoint, must start with http:// or https://',
+    timeout: 'Timeout (seconds)',
+    timeout_tip: 'Timeout for a single tool call, in seconds',
+    timeout_placeholder: 'e.g. 30',
+    headers: 'Headers',
+    headers_key: 'Header name',
+    headers_value: 'Header value',
+    add_header: 'Add header',
+    headers_tip: 'Custom headers attached to every outbound request, e.g. for authentication (Authorization)',
+  },
+};
+
+export default en_US;
