@@ -361,7 +361,7 @@ function FilterPopover(props: {
         }
       }}
       content={
-        <div className='w-[480px]'>
+        <div className='w-[480px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical' validateTrigger={[]}>
             <Row gutter={SIZE}>
               <Col span={12}>
@@ -411,7 +411,7 @@ function Filters(props: {
   const { value, onChange, ignoreNextOutsideClick, datasourceValue, range } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   return (
-    <Space size={[SIZE, SIZE / 2]} wrap style={{ maxWidth: 'calc(100% - 200px)' }}>
+    <Space size={[SIZE, SIZE / 2]} wrap>
       {_.map(value, (item, index) => {
         if (!item.field || !item.op) return null;
         return (
@@ -507,7 +507,7 @@ function AggregationPopover(props: {
         }
       }}
       content={
-        <div className='w-[480px]'>
+        <div className='w-[480px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical' validateTrigger={[]}>
             <Row gutter={SIZE}>
               <Col span={12}>
@@ -644,7 +644,7 @@ function OrderByPopover(props: {
         }
       }}
       content={
-        <div className='w-[400px]'>
+        <div className='w-[400px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical'>
             <Row gutter={SIZE}>
               <Col span={16}>
@@ -817,11 +817,10 @@ export default function Builder(props: Props) {
   return (
     <div
       ref={eleRef}
-      className={classNames('w-full border border-antd rounded-lg mb-2 mt-1 bg-fc-100 left-0 p-4 pt-2 shadow-lg', {
-        absolute: !queryBuilderPinned,
-        'top-[32px]': !queryBuilderPinned,
+      className={classNames('w-full relative border border-antd rounded-lg mb-2 mt-1 bg-fc-100 p-4 pt-2 shadow-lg', {
+        // 未固定：文档流内展开（把下方图表推开而不是悬浮遮挡）；
+        // 面板 zIndex 低于「查询条件」标签(z-index:3)，让标签的连接饰条压在面板上沿形成 tab 咬合
         'border-primary': !queryBuilderPinned,
-        relative: queryBuilderPinned,
       })}
       style={{
         zIndex: 2,
@@ -901,64 +900,65 @@ export default function Builder(props: Props) {
           </div>
         </div>
         {validationMessage && <Alert className='mt-3' showIcon type='warning' message={validationMessage} />}
-        <Space size={SIZE} className='mt-3'>
-          <Button
-            size='small'
-            type='primary'
-            icon={<SearchOutlined />}
-            onClick={() => {
-              if (!validateBuilder()) return;
-              const res = getRenderResult();
-              onExecute(res.query, res.values);
-            }}
-          >
-            {t('builder.execute')}
-          </Button>
-          <Button
-            size='small'
-            onClick={() => {
-              if (!validateBuilder()) return;
-              const res = getRenderResult();
-              onPreviewQL(res.query, res.values);
-            }}
-          >
-            {t('builder.preview_ql')}
-          </Button>
-        </Space>
-      </Form>
-      <div className='absolute top-2 right-2'>
-        <Space size={0}>
-          <Button
-            type='link'
-            onClick={(e) => {
-              e.stopPropagation();
-              DocumentDrawer({
-                language: i18n.language === 'zh_CN' ? 'zh_CN' : 'en_US',
-                title: t('common:document_title'),
-                type: 'iframe',
-                documentPath: VICTORIALOGS_LOGS_QUERY_DOC_URL,
-              });
-            }}
-          >
-            {t('common:document_title')}
-          </Button>
-          <Tooltip title={queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}>
+        <div className='mt-3 flex items-center justify-between gap-2'>
+          <Space size={SIZE}>
             <Button
-              type='text'
-              icon={<PushpinOutlined />}
-              onMouseDown={() => {
-                ignoreNextOutsideClick();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setQueryBuilderPinned(!queryBuilderPinned);
+              size='small'
+              type='primary'
+              icon={<SearchOutlined />}
+              onClick={() => {
+                if (!validateBuilder()) return;
+                const res = getRenderResult();
+                onExecute(res.query, res.values);
               }}
             >
-              {queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}
+              {t('builder.execute')}
             </Button>
-          </Tooltip>
-        </Space>
-      </div>
+            <Button
+              size='small'
+              onClick={() => {
+                if (!validateBuilder()) return;
+                const res = getRenderResult();
+                onPreviewQL(res.query, res.values);
+              }}
+            >
+              {t('builder.preview_ql')}
+            </Button>
+          </Space>
+          <Space size={0}>
+            <Button
+              type='link'
+              onClick={(e) => {
+                e.stopPropagation();
+                DocumentDrawer({
+                  language: i18n.language === 'zh_CN' ? 'zh_CN' : 'en_US',
+                  title: t('common:document_title'),
+                  type: 'iframe',
+                  documentPath: VICTORIALOGS_LOGS_QUERY_DOC_URL,
+                });
+              }}
+            >
+              {t('common:document_title')}
+            </Button>
+            <Tooltip title={queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}>
+              <Button
+                size='small'
+                type='text'
+                icon={<PushpinOutlined />}
+                onMouseDown={() => {
+                  ignoreNextOutsideClick();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQueryBuilderPinned(!queryBuilderPinned);
+                }}
+              >
+                {queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}
+              </Button>
+            </Tooltip>
+          </Space>
+        </div>
+      </Form>
     </div>
   );
 }

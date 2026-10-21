@@ -57,7 +57,7 @@ export default function ParamsPopover(props: Props) {
         }
       }}
       content={
-        <div className='w-[400px]'>
+        <div className='w-[400px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical'>
             <Row gutter={SIZE}>
               <Col span={12}>

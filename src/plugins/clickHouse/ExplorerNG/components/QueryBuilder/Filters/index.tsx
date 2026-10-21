@@ -30,9 +30,6 @@ export default function Filters(props: Props) {
     <Space
       size={[SIZE, SIZE / 2]}
       wrap
-      style={{
-        maxWidth: 'calc(100% - 200px)', // leave some space for other buttons
-      }}
     >
       {_.map(value, (item, index) => {
         if (!item.field || !item.operator) {

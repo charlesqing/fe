@@ -62,11 +62,9 @@ export default function QueryBuilderCpt(props: Props) {
     >
       <div
         ref={eleRef}
-        className={classNames('w-full border border-antd rounded-sm mb-2 mt-1 bg-fc-100 left-0 p-4 pt-2 shadow-lg', {
-          absolute: !queryBuilderPinned,
-          'top-[32px]': !queryBuilderPinned,
+        className={classNames('w-full relative border border-antd rounded-sm mb-2 mt-1 bg-fc-100 p-4 pt-2 shadow-lg', {
+          // 未固定：文档流内展开（把下方图表推开而不是悬浮遮挡）
           'border-primary': !queryBuilderPinned,
-          relative: queryBuilderPinned,
         })}
         style={{
           zIndex: 2,
@@ -125,7 +123,7 @@ export default function QueryBuilderCpt(props: Props) {
             });
           }}
         />
-        <div className='absolute top-2 right-2'>
+        <div className='flex items-center justify-end mt-2'>
           <Space size={0}>
             <Button
               type='link'
