@@ -373,7 +373,7 @@ function FilterPopover(props: {
         }
       }}
       content={
-        <div className='w-[480px]'>
+        <div className='w-[480px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical' validateTrigger={[]}>
             <Row gutter={SIZE}>
               <Col span={12}>
@@ -427,7 +427,7 @@ function Filters(props: {
   const { value, onChange, ignoreNextOutsideClick, datasourceValue, range, org, stream } = props;
   const { t } = useTranslation(VICTORIALOGS_NS);
   return (
-    <Space size={[SIZE, SIZE / 2]} wrap style={{ maxWidth: 'calc(100% - 200px)' }}>
+    <Space size={[SIZE, SIZE / 2]} wrap style={{ width: '100%' }}>
       {_.map(value, (item, index) => {
         if (!item.field || !item.op) return null;
         return (
@@ -527,7 +527,7 @@ function AggregationPopover(props: {
         }
       }}
       content={
-        <div className='w-[480px]'>
+        <div className='w-[480px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical' validateTrigger={[]}>
             <Row gutter={SIZE}>
               <Col span={12}>
@@ -664,7 +664,7 @@ function OrderByPopover(props: {
         }
       }}
       content={
-        <div className='w-[400px]'>
+        <div className='w-[400px] max-w-[calc(100vw-120px)]'>
           <Form form={form} layout='vertical'>
             <Row gutter={SIZE}>
               <Col span={16}>
@@ -842,11 +842,10 @@ export default function Builder(props: Props) {
   return (
     <div
       ref={eleRef}
-      className={classNames('w-full border border-antd rounded bg-fc-100 left-0 px-3 py-2 shadow-sm', {
-        absolute: !queryBuilderPinned,
-        'top-[32px]': !queryBuilderPinned,
+      className={classNames('w-full relative border border-antd rounded bg-fc-100 px-3 py-2 shadow-sm', {
+        // 未固定：文档流内展开（把下方图表推开而不是悬浮遮挡），高亮边框提示激活态；
+        // 面板 zIndex 低于「查询条件」标签(z-index:3)，让标签的连接饰条(::after)压在面板上沿形成 tab 咬合
         'border-primary': !queryBuilderPinned,
-        relative: queryBuilderPinned,
       })}
       style={{
         zIndex: 2,
@@ -926,48 +925,49 @@ export default function Builder(props: Props) {
           </div>
         </div>
         {validationMessage && <Alert className='mt-3' showIcon type='warning' message={validationMessage} />}
-        <Space size={SIZE} className='mt-2'>
-          <Button
-            size='small'
-            type='primary'
-            icon={<SearchOutlined />}
-            onClick={() => {
-              if (!validateBuilder()) return;
-              const res = getRenderResult();
-              onExecute(res.query, res.values);
-            }}
-          >
-            {t('builder.execute')}
-          </Button>
-          <Button
-            size='small'
-            onClick={() => {
-              if (!validateBuilder()) return;
-              const res = getRenderResult();
-              onPreviewQL(res.query, res.values);
-            }}
-          >
-            {t('builder.preview_ql')}
-          </Button>
-        </Space>
+        <div className='mt-2 flex items-center justify-between gap-2'>
+          <Space size={SIZE}>
+            <Button
+              size='small'
+              type='primary'
+              icon={<SearchOutlined />}
+              onClick={() => {
+                if (!validateBuilder()) return;
+                const res = getRenderResult();
+                onExecute(res.query, res.values);
+              }}
+            >
+              {t('builder.execute')}
+            </Button>
+            <Button
+              size='small'
+              onClick={() => {
+                if (!validateBuilder()) return;
+                const res = getRenderResult();
+                onPreviewQL(res.query, res.values);
+              }}
+            >
+              {t('builder.preview_ql')}
+            </Button>
+          </Space>
+          <Tooltip title={queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}>
+            <Button
+              size='small'
+              type='text'
+              icon={<PushpinOutlined />}
+              onMouseDown={() => {
+                ignoreNextOutsideClick();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setQueryBuilderPinned(!queryBuilderPinned);
+              }}
+            >
+              {queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}
+            </Button>
+          </Tooltip>
+        </div>
       </Form>
-      <div className='absolute top-2 right-2'>
-        <Tooltip title={queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}>
-          <Button
-            type='text'
-            icon={<PushpinOutlined />}
-            onMouseDown={() => {
-              ignoreNextOutsideClick();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setQueryBuilderPinned(!queryBuilderPinned);
-            }}
-          >
-            {queryBuilderPinned ? t('builder.unpin') : t('builder.pin')}
-          </Button>
-        </Tooltip>
-      </div>
     </div>
   );
 }
