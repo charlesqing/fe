@@ -17,7 +17,7 @@ const en_US = {
     test_connection: 'Test connection',
     test_connection_success: 'Connection successful',
     test_connection_failure: 'Connection failed',
-    test_connection_result: 'Discovered {count} tools',
+    test_connection_result: 'Discovered {{count}} tools',
     name_placeholder: 'Enter a name for the MCP server',
     description_placeholder: 'Enter a description',
     transport_map: {

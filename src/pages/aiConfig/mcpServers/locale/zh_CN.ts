@@ -17,7 +17,7 @@ const zh_CN = {
     test_connection: '测试连接',
     test_connection_success: '连接成功',
     test_connection_failure: '连接失败',
-    test_connection_result: '发现 {count} 个工具',
+    test_connection_result: '发现 {{count}} 个工具',
     name_placeholder: '请输入 MCP 服务器名称',
     description_placeholder: '请输入描述信息',
     transport_map: {
