@@ -266,7 +266,14 @@ function showSiblingOverlays(sourceId: string, sourceUplot: uPlot) {
         const bLeft = bbox.left;
         const bTop = bbox.top;
         const anchor = { left: left + bLeft, top: top + bTop };
-        (window as any).placement(overlay, anchor, 'right', 'start', { bound: document.body });
+        if (typeof (window as any).placement === 'function') {
+          (window as any).placement(overlay, anchor, 'right', 'start', { bound: document.body });
+        } else {
+          // placement.min.js 未加载（如静态资源被广告拦截器挡掉）时的兜底定位，
+          // 保证 tooltip 仍出现在鼠标附近而不是留在 (0,0) 或不可见
+          overlay.style.left = `${anchor.left + 12}px`;
+          overlay.style.top = `${anchor.top + 12}px`;
+        }
 
         // tooltip 排序
         if (options.sort !== 'none') {

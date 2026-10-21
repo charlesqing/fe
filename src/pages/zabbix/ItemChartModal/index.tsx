@@ -97,6 +97,9 @@ export default function ItemChartModal({
           mode: 'all' as const,
           sort: 'none' as const,
           pinningEnabled: true,
+          // tooltip overlay 挂在 document.body 上，默认 z-index 999 会被
+          // antd Modal（z-index 1000）盖住，表现为有十字线但看不到 tooltip
+          zIndex: 1999,
         }),
       ],
       cursor: cursorBuider({}),
