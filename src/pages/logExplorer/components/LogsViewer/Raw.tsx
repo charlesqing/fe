@@ -844,6 +844,7 @@ function Raw(props: Props) {
         </div>
       </div>
       <NavigableDrawer
+        defaultSize='middle'
         className='log-explorer-ignore-click-away'
         title={navigableDrawerTitle}
         extra={drawerExtra}

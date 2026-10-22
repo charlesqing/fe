@@ -35,6 +35,7 @@ const NavigableDrawer: React.FC<NavigableDrawerProps> = ({
   title,
   children,
   inlineMode = true, // 默认开启内联模式
+  defaultSize = 'small',
   mask,
   getContainer,
   style,

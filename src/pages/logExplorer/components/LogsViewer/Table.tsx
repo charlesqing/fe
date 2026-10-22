@@ -226,6 +226,7 @@ function Table(props: Props) {
         }}
       />
       <NavigableDrawer
+        defaultSize='middle'
         className='log-explorer-ignore-click-away'
         title={navigableDrawerTitle}
         extra={
