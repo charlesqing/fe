@@ -40,8 +40,12 @@ export const deleteItem = function (id: number) {
   }).then((res) => res.dat);
 };
 
-export const getMCPServers = function (): Promise<{ id: number; name: string }[]> {
-  return request(`/api/${N9E_PATHNAME}/mcp-servers`, {
+// getMCPServers 走轻量 meta 接口：只回 id/name/enabled，不触达凭据列。
+// enabled 用于在 Agent 表单里标注「已禁用」——运行时装配工具源会静默剔除
+// 禁用服务器（models.MCPServersByIds 过滤 enabled=true），表单里提前标注
+// 避免绑定了还以为生效。
+export const getMCPServers = function (): Promise<{ id: number; name: string; enabled: boolean }[]> {
+  return request(`/api/${N9E_PATHNAME}/mcp-servers/meta`, {
     method: RequestMethod.Get,
   }).then((res) => res.dat ?? []);
 };

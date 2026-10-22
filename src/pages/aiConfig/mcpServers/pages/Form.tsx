@@ -8,7 +8,6 @@ import { SIZE } from '@/utils/constant';
 
 import { NS } from '../constants';
 import './style.less';
-
 interface Props {
   form: FormInstance;
   isSystemConfig?: boolean;
@@ -49,7 +48,7 @@ export default function FormCpt(props: Props) {
           </Col>
           <Col span={12}>
             <Form.Item label={t('form.timeout')} tooltip={t('form.timeout_tip')} name='timeout'>
-              <InputNumber style={{ width: '100%' }} min={1} placeholder={t('form.timeout_placeholder')} />
+              <InputNumber style={{ width: '100%' }} min={1} max={300} placeholder={t('form.timeout_placeholder')} />
             </Form.Item>
           </Col>
         </Row>
@@ -71,7 +70,9 @@ export default function FormCpt(props: Props) {
                         </Col>
                         <Col span={12}>
                           <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true, message: '' }]}>
-                            <Input placeholder={t('form.headers_value')} />
+                            {/* 密码框 + 眼睛图标：凭据类 header 值防截图/肩窥泄露。
+                                编辑态后端返回的是掩码值 ********，原样保存即保留原值。 */}
+                            <Input.Password placeholder={t('form.headers_value')} autoComplete='new-password' />
                           </Form.Item>
                         </Col>
                       </Row>

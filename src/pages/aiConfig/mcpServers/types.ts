@@ -6,7 +6,8 @@ export interface Item {
   description: string;
   transport: MCPTransport;
   url: string;
-  // 列表接口返回遮蔽取值的视图（键保留、值替换为 ********）；详情接口返回明文。
+  // 列表与详情接口均返回遮蔽取值的视图（键保留、值替换为 ********）；
+  // 保存时掩码值原样提交，后端会保留库中真实值（mergeMaskedHeaders）。
   headers?: Record<string, string>;
   timeout: number;
   enabled: boolean;

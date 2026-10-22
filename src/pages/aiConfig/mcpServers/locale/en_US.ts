@@ -35,7 +35,8 @@ const en_US = {
     headers_key: 'Header name',
     headers_value: 'Header value',
     add_header: 'Add header',
-    headers_tip: 'Custom headers attached to every outbound request, e.g. for authentication (Authorization)',
+    headers_tip: 'Custom headers attached to every outbound request, e.g. for authentication (Authorization). Saved values are shown masked (********); unchanged entries keep their stored value on save',
+    headers_masked_test_warning: 'Some header values are still the unchanged mask (********); fill in the real values to test the connection',
   },
 };
 

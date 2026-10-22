@@ -24,7 +24,9 @@ export const postItem = function (data: Item) {
   }).then((res) => res.dat);
 };
 
-export const putItem = function (id: number, data: Item) {
+// putItem 接受局部字段：列表页开关只提交 { enabled }，避免把遮蔽后的 headers
+// 值整体回写（后端 Update 的 Select 白名单天然兼容局部更新）。
+export const putItem = function (id: number, data: Partial<Item>) {
   return request(`/api/n9e/mcp-server/${id}`, {
     method: RequestMethod.Put,
     data,

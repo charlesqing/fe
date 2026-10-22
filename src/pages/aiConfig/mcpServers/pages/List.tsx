@@ -116,10 +116,10 @@ export default function List() {
                         size='small'
                         checked={val}
                         onChange={(checked) => {
-                          putItem(record.id, {
-                            ...record,
-                            enabled: checked,
-                          }).then(() => {
+                          // 只提交 enabled：列表行数据的 headers 已被后端遮蔽为 ********，
+                          // 整体回写会把掩码值当新凭据落库（后端 Update 有掩码合并兜底，
+                          // 这里从源头避免污染）。
+                          putItem(record.id, { enabled: checked }).then(() => {
                             message.success(t('common:success.modify'));
                             run();
                           });

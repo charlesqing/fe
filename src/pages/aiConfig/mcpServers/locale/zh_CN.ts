@@ -35,7 +35,8 @@ const zh_CN = {
     headers_key: 'Header 名',
     headers_value: 'Header 值',
     add_header: '添加请求头',
-    headers_tip: '附加到每个出站请求的自定义请求头，可用于鉴权（如 Authorization）',
+    headers_tip: '附加到每个出站请求的自定义请求头，可用于鉴权（如 Authorization）。编辑时已保存的取值会遮蔽显示（********），保存时未修改的项自动保留原值',
+    headers_masked_test_warning: '请求头中存在未修改的掩码值（********），请先填写需要测试的真实取值',
   },
 };
 

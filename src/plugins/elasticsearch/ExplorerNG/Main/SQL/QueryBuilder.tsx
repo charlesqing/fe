@@ -149,7 +149,7 @@ export default function QueryBuilderCpt(props: Props) {
           }}
         />
         <div className='flex items-center justify-end mt-2'>
-          <Space size={0}>
+          <Space size={0} wrap>
             <Button
               type='text'
               icon={<PushpinOutlined />}

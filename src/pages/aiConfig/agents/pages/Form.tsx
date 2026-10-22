@@ -94,9 +94,18 @@ export default function FormCpt(props: Props) {
         <Select
           placeholder={t('form.mcp_placeholder')}
           loading={mcpServersLoading}
-          options={map(mcpServers, (server) => ({ label: server.name, value: server.id }))}
+          options={map(mcpServers, (server) => ({
+            label: (
+              <Space>
+                <span>{server.name}</span>
+                {server.enabled === false && <Tag color='red'>{t('disabled')}</Tag>}
+              </Space>
+            ),
+            originLabel: server.name,
+            value: server.id,
+          }))}
           showSearch
-          optionFilterProp='label'
+          optionFilterProp='originLabel'
           mode='multiple'
         />
       </Form.Item>

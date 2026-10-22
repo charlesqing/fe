@@ -825,6 +825,9 @@ export default function Builder(props: Props) {
       style={{
         zIndex: 2,
         display: visible ? 'block' : 'none',
+        // 与 loki Builder 对齐：多筛选行时小屏限高内滚，避免面板超出视口
+        maxHeight: 'calc(100vh - 180px)',
+        overflowY: 'auto',
       }}
     >
       <Form form={form} layout='vertical'>

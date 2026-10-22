@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Drawer, Form, Space, Spin, Modal } from 'antd';
+import { Button, Drawer, Form, Space, Spin, Modal, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useRequest } from 'ahooks';
 
-import { NS } from '../constants';
+import { NS, HEADERS_MASK } from '../constants';
 import { getItem, putItem, testConnection } from '../services';
 import type { Item } from '../types';
 import FormCpt from './Form';
@@ -55,7 +55,7 @@ export default function EditDrawer(props: Props) {
 
   return (
     <Drawer
-      width={600}
+      width={700}
       title={t('form.edit_title')}
       placement='right'
       visible={visible}
@@ -67,6 +67,12 @@ export default function EditDrawer(props: Props) {
             loading={testLoading}
             onClick={() => {
               form.validateFields().then((values) => {
+                // 详情接口遮蔽 header 值后，表单里未修改的项是掩码 ********；
+                // 拿掩码去测连接必然 401，先拦下来要求补真实值。
+                if (values.headers?.some((h) => h.value === HEADERS_MASK)) {
+                  message.warning(t('form.headers_masked_test_warning'));
+                  return;
+                }
                 setTestLoading(true);
                 testConnection(adjustSubmitValues(values))
                   .then((res) => {
