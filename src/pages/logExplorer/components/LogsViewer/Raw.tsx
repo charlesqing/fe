@@ -849,7 +849,6 @@ function Raw(props: Props) {
         title={navigableDrawerTitle}
         extra={drawerExtra}
         placement='right'
-        defaultSize='middle'
         onClose={() => {
           setLogViewerDrawerState({ visible: false, currentIndex: -1 });
         }}

@@ -42,7 +42,6 @@ const NavigableDrawer: React.FC<NavigableDrawerProps> = ({
   width,
   extra,
   className,
-  defaultSize = 'small',
   ...restProps
 }) => {
   const { t } = useTranslation('navigableDrawer');

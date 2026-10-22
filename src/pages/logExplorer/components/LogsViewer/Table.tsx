@@ -246,7 +246,6 @@ function Table(props: Props) {
           </LogDetailActions>
         }
         placement='right'
-        defaultSize='middle'
         onClose={() => {
           setLogViewerDrawerState({ visible: false, currentIndex: -1 });
         }}
